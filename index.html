@@ -196,7 +196,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 12 • 20.09.2026</div>
+<div class="ver">версія 14 • 20.09.2026</div>
 </div><!-- /app -->
 
 <div id="alarm">
@@ -308,8 +308,8 @@ const SOUNDS = {
 };
 function playSound(ev){
   try{
+    stopSound(); // never layer a new melody over a ringing one
     if(ev.customSound){ // dataURL uploaded by user
-      stopSound();
       const a = new Audio(ev.customSound);
       activeAudioEl = a;
       a.play().catch(()=>{});
@@ -416,8 +416,10 @@ function dismissAlarm(){
   renderList();
 }
 $("alarmDone").onclick = dismissAlarm;
-// instant response on old tablets even if click is delayed
-$("alarmDone").addEventListener("touchstart", dismissAlarm, {passive:true});
+// instant response on old tablets even if click is delayed;
+// non-passive + preventDefault kills the iOS ghost click that could
+// otherwise hit a play button under the overlay after it hides
+$("alarmDone").addEventListener("touchstart", function(e){ if(e.cancelable) e.preventDefault(); dismissAlarm(); }, {passive:false});
 
 /* ---------- Settings editor ---------- */
 let draft = [];
