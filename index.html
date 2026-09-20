@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Режим дня ☀️</title>
+<meta name="theme-color" content="#ff9f1c">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<style>
+  :root{
+    --bg1:#fff7e6; --bg2:#ffe8f0;
+    --card:#ffffff; --ink:#3a2e2e; --muted:#9a8c8c;
+    --accent:#ff9f1c; --accent2:#ff5d8f; --green:#2ec4b6; --blue:#4cc9f0;
+    --radius:22px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    color:var(--ink);
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+  }
+  header{width:100%; max-width:560px; text-align:center; padding:18px 8px 6px;}
+  header h1{margin:0; font-size:30px; letter-spacing:.5px;}
+  #clock{font-size:52px; font-weight:800; margin:6px 0 0; font-variant-numeric:tabular-nums;}
+  #dateLine{color:var(--muted); font-size:15px; margin-top:2px;}
+  #nextUp{
+    margin:12px auto 0; max-width:560px; width:100%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#fff; border-radius:var(--radius); padding:14px 18px;
+    display:flex; align-items:center; gap:14px;
+    box-shadow:0 8px 24px rgba(255,93,143,.35);
+  }
+  #nextUp .emo{font-size:40px;}
+  #nextUp .t1{font-size:13px; opacity:.9;}
+  #nextUp .t2{font-size:20px; font-weight:700;}
+  #nextUp .t3{font-size:15px; font-weight:600;}
+  main{width:100%; max-width:560px; padding:14px 0 90px;}
+  .ev{
+    background:var(--card); border-radius:var(--radius);
+    padding:14px 16px; margin:10px 0;
+    display:flex; align-items:center; gap:14px;
+    box-shadow:0 4px 14px rgba(0,0,0,.06);
+    border:3px solid transparent;
+  }
+  .ev .emo{font-size:38px; width:52px; text-align:center; flex:none;}
+  .ev .info{flex:1; min-width:0;}
+  .ev .name{font-size:19px; font-weight:700;}
+  .ev .time{font-size:15px; color:var(--muted); font-variant-numeric:tabular-nums;}
+  .ev .badge{font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; flex:none;}
+  .ev.done{opacity:.55;}
+  .ev.done .badge{background:#e8f7f3; color:#1d9e8f;}
+  .ev.now{border-color:var(--accent); box-shadow:0 6px 20px rgba(255,159,28,.35);}
+  .ev.now .badge{background:#fff3df; color:#d97e06;}
+  .ev.next .badge{background:#e7f6fd; color:#1b9ad6;}
+  .ev .play{
+    flex:none; width:48px; height:48px; border-radius:50%; border:none;
+    background:linear-gradient(135deg,var(--blue),var(--green));
+    font-size:20px; color:#fff; cursor:pointer;
+    box-shadow:0 4px 12px rgba(76,201,240,.4);
+  }
+  .ev .play:active{transform:scale(.92);}
+  footer{
+    position:fixed; bottom:0; left:0; right:0;
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    display:flex; justify-content:center; gap:12px;
+    background:linear-gradient(180deg,transparent,rgba(255,247,230,.95) 40%);
+  }
+  .fab{
+    border:none; border-radius:999px; padding:14px 22px; font-size:17px; font-weight:700;
+    cursor:pointer; color:#fff;
+    box-shadow:0 6px 18px rgba(0,0,0,.18);
+  }
+  #settingsBtn{background:linear-gradient(135deg,#7b6cf0,#4cc9f0);}
+  #wakeBtn{background:linear-gradient(135deg,var(--green),#7bd88f);}
+  #wakeBtn.on{background:linear-gradient(135deg,#2ec4b6,#1d9e8f);}
+  /* Overlay alarm */
+  #alarm{
+    position:fixed; inset:0; z-index:50; display:none;
+    background:linear-gradient(160deg,#ff9f1c,#ff5d8f);
+    flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    color:#fff; padding:24px;
+    animation:pop .45s ease;
+  }
+  #alarm.show{display:flex;}
+  @keyframes pop{from{transform:scale(.85); opacity:0;} to{transform:scale(1); opacity:1;}}
+  #alarm .big{font-size:110px; animation:bounce 1s infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0);} 50%{transform:translateY(-18px);}}
+  #alarm h2{font-size:34px; margin:14px 0 6px;}
+  #alarm p{font-size:18px; opacity:.95; margin:0 0 26px;}
+  #alarmDone{
+    border:none; border-radius:999px; padding:18px 54px; font-size:22px; font-weight:800;
+    background:#fff; color:#ff5d8f; cursor:pointer;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+  }
+  #alarmDone:active{transform:scale(.94);}
+  /* Settings sheet */
+  #sheet{
+    position:fixed; inset:0; z-index:60; display:none;
+    background:rgba(58,46,46,.45); align-items:flex-end; justify-content:center;
+  }
+  #sheet.show{display:flex;}
+  #sheetCard{
+    background:#fff; width:100%; max-width:560px; max-height:88dvh; overflow:auto;
+    border-radius:28px 28px 0 0; padding:20px 18px calc(24px + env(safe-area-inset-bottom));
+    animation:slideUp .3s ease;
+  }
+  @keyframes slideUp{from{transform:translateY(40px); opacity:0;} to{transform:none; opacity:1;}}
+  #sheetCard h2{margin:0 0 12px; font-size:22px;}
+  .row{display:flex; gap:8px; margin:8px 0; align-items:center;}
+  .row input[type=text]{flex:1; font-size:16px; padding:10px 12px; border:2px solid #eee; border-radius:14px;}
+  .row input[type=time]{font-size:16px; padding:10px 12px; border:2px solid #eee; border-radius:14px;}
+  .row select{font-size:15px; padding:10px 8px; border:2px solid #eee; border-radius:14px; max-width:150px;}
+  .emoPick{font-size:22px; width:52px; text-align:center; border:2px solid #eee; border-radius:14px; padding:6px 0; background:#fff;}
+  .iconBtn{border:none; background:#f4f1f1; border-radius:12px; font-size:18px; padding:10px 12px; cursor:pointer;}
+  .iconBtn.danger{background:#ffe3ea;}
+  #addBtn{
+    width:100%; border:2px dashed #d8cfcf; background:none; border-radius:16px;
+    padding:14px; font-size:17px; font-weight:700; color:var(--muted); cursor:pointer; margin-top:6px;
+  }
+  .sheetActions{display:flex; gap:10px; margin-top:16px;}
+  .sheetActions button{flex:1; border:none; border-radius:16px; padding:15px; font-size:17px; font-weight:700; cursor:pointer;}
+  #saveBtn{background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff;}
+  #closeBtn{background:#f4f1f1; color:var(--ink);}
+  .hint{font-size:13px; color:var(--muted); margin:10px 0 0; line-height:1.5;}
+  .soundRow{display:flex; gap:8px; align-items:center; margin-top:6px;}
+  .soundRow label{font-size:13px; color:var(--muted);}
+  .uploadLbl{
+    font-size:13px; font-weight:700; color:#1b9ad6; background:#e7f6fd;
+    padding:8px 12px; border-radius:12px; cursor:pointer; white-space:nowrap;
+  }
+  input[type=file]{display:none;}
+</style>
+</head>
+<body>
+<header>
+  <h1>☀️ Режим дня</h1>
+  <div id="clock">--:--</div>
+  <div id="dateLine"></div>
+</header>
+
+<div id="nextUp" style="display:none">
+  <div class="emo" id="nuEmo">⏰</div>
+  <div>
+    <div class="t1">Далі за розкладом</div>
+    <div class="t2" id="nuName"></div>
+    <div class="t3" id="nuTime"></div>
+  </div>
+</div>
+
+<main id="list"></main>
+
+<footer>
+  <button class="fab" id="wakeBtn">📱 Тримати екран</button>
+  <button class="fab" id="settingsBtn">⚙️ Налаштування</button>
+</footer>
+
+<div id="alarm">
+  <div class="big" id="alarmEmo">☀️</div>
+  <h2 id="alarmName">Підйом!</h2>
+  <p>Час настав! 🎉</p>
+  <button id="alarmDone">Готово! ✅</button>
+</div>
+
+<div id="sheet">
+  <div id="sheetCard">
+    <h2>⚙️ Розклад дня</h2>
+    <div id="editor"></div>
+    <button id="addBtn">＋ Додати подію</button>
+    <div class="sheetActions">
+      <button id="closeBtn">Скасувати</button>
+      <button id="saveBtn">Зберегти 💾</button>
+    </div>
+    <p class="hint">💡 Порада: щоб звук лунав вчасно, тримай цю сторінку відкритою — натисни «📱 Тримати екран». На заблокованому телефоні браузер не може будити звуком (обмеження iOS).</p>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------- Data ---------- */
+const LS_KEY = "kidsRoutine.v1";
+const DEFAULT_EVENTS = [
+  {id:"e1", name:"Підйом",       time:"07:30", emoji:"☀️", sound:"sunrise"},
+  {id:"e2", name:"Сніданок",     time:"08:00", emoji:"🥣", sound:"yummy"},
+  {id:"e3", name:"Прогулянка",   time:"10:00", emoji:"🌳", sound:"play"},
+  {id:"e4", name:"Обід",         time:"12:30", emoji:"🍲", sound:"yummy"},
+  {id:"e5", name:"Тиха година",  time:"13:30", emoji:"😴", sound:"sleep"},
+  {id:"e6", name:"Полуденок",    time:"16:00", emoji:"🍎", sound:"play"},
+  {id:"e7", name:"Вечеря",       time:"18:30", emoji:"🍽️", sound:"yummy"},
+  {id:"e8", name:"Сон",          time:"20:30", emoji:"🌙", sound:"sleep"},
+];
+let events = load();
+function load(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){ const arr = JSON.parse(raw); if(Array.isArray(arr) && arr.length) return arr; }
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+}
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(events)); }catch(e){} }
+
+/* ---------- Audio: fun synthesized sounds ---------- */
+let AC = null;
+function ac(){
+  if(!AC){ AC = new (window.AudioContext||window.webkitAudioContext)(); }
+  if(AC.state === "suspended") AC.resume();
+  return AC;
+}
+function tone(freq, t0, dur, type, vol){
+  const c = ac(), o = c.createOscillator(), g = c.createGain();
+  o.type = type || "triangle"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol || 0.35, t0 + 0.03);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(c.destination);
+  o.start(t0); o.stop(t0 + dur + 0.05);
+}
+const N = {C4:261.63,D4:293.66,E4:329.63,F4:349.23,G4:392.00,A4:440.00,B4:493.88,
+           C5:523.25,D5:587.33,E5:659.25,F5:698.46,G5:783.99,A5:880.00,B5:987.77,C6:1046.5};
+function melody(notes, type, gap){
+  const c = ac(), t = c.currentTime + 0.05;
+  notes.forEach((n,i)=> tone(n, t + i*(gap||0.22), 0.28, type||"triangle", 0.32));
+  return notes.length*(gap||0.22);
+}
+const SOUNDS = {
+  sunrise:{label:"🌅 Підйом", play(){ melody([N.C4,N.E4,N.G4,N.C5,N.E5,N.G5,N.C6],"triangle",0.18); }},
+  yummy:{label:"😋 Смаколик", play(){ melody([N.E5,N.D5,N.C5,N.D5,N.E5,N.E5,N.E5],"square",0.16); melody([N.C5], "square", 0.16); }},
+  play:{label:"🤸 Гра", play(){ melody([N.C5,N.E5,N.G5,N.E5,N.A5,N.G5,N.E5,N.C5],"triangle",0.15); }},
+  sleep:{label:"💤 Колискова", play(){ melody([N.G4,N.E4,N.C4,N.E4,N.G4],"sine",0.4); }},
+  fanfare:{label:"🎺 Фанфари", play(){ melody([N.C5,N.C5,N.C5,N.F5,N.E5,N.D5,N.C5],"sawtooth",0.16); }},
+};
+function playSound(ev){
+  try{
+    if(ev.customSound){ // dataURL uploaded by user
+      const a = new Audio(ev.customSound);
+      a.play().catch(()=>{});
+      return;
+    }
+    (SOUNDS[ev.sound] || SOUNDS.fanfare).play();
+  }catch(e){}
+}
+function testSound(key){ try{ (SOUNDS[key]||SOUNDS.fanfare).play(); }catch(e){} }
+// unlock audio on first touch
+window.addEventListener("pointerdown", ()=>{ try{ ac(); }catch(e){} }, {once:true});
+
+/* ---------- Clock & list ---------- */
+const $ = id => document.getElementById(id);
+function nowHM(){ const d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+function tickClock(){
+  const d = new Date();
+  $("clock").textContent = nowHM();
+  const days=["неділя","понеділок","вівторок","середа","четвер","пʼятниця","субота"];
+  const mon=["січня","лютого","березня","квітня","травня","червня","липня","серпня","вересня","жовтня","листопада","грудня"];
+  $("dateLine").textContent = days[d.getDay()]+", "+d.getDate()+" "+mon[d.getMonth()];
+}
+function sortedEvents(){ return [...events].sort((a,b)=> a.time < b.time ? -1 : 1); }
+function renderList(){
+  const hm = nowHM(), list = $("list"); list.innerHTML = "";
+  const se = sortedEvents();
+  let nextEv = null;
+  se.forEach(ev=>{
+    const done = ev.time <= hm && !ringing.has(ev.id+todayKey());
+    const isNext = !done && !nextEv;
+    if(isNext) nextEv = ev;
+    const div = document.createElement("div");
+    div.className = "ev"+(done?" done":"")+(isNext?" next":"");
+    const badge = done ? "✅" : (isNext ? "Далі" : "⏳");
+    div.innerHTML =
+      '<div class="emo">'+escapeHtml(ev.emoji||"⏰")+'</div>'+
+      '<div class="info"><div class="name">'+escapeHtml(ev.name)+'</div>'+
+      '<div class="time">'+escapeHtml(ev.time)+'</div></div>'+
+      '<div class="badge">'+badge+'</div>'+
+      '<button class="play" title="Послухати звук">▶</button>';
+    div.querySelector(".play").onclick = ()=> playSound(ev);
+    list.appendChild(div);
+  });
+  if(nextEv){
+    $("nextUp").style.display = "flex";
+    $("nuEmo").textContent = nextEv.emoji || "⏰";
+    $("nuName").textContent = nextEv.name;
+    $("nuTime").textContent = "о "+nextEv.time;
+  } else {
+    $("nextUp").style.display = "none";
+  }
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ---------- Alarm engine ---------- */
+const ringing = new Set();
+function todayKey(){ const d=new Date(); return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate(); }
+let currentAlarm = null, alarmTimer = null;
+function checkAlarms(){
+  const hm = nowHM(), tk = todayKey();
+  for(const ev of events){
+    const key = ev.id + tk;
+    if(ev.time === hm && !ringing.has(key)){
+      ringing.add(key);
+      fireAlarm(ev);
+      break;
+    }
+  }
+}
+function fireAlarm(ev){
+  currentAlarm = ev;
+  $("alarmEmo").textContent = ev.emoji || "⏰";
+  $("alarmName").textContent = ev.name + "!";
+  $("alarm").classList.add("show");
+  renderList();
+  // play sound in a loop until dismissed (max ~90s)
+  let plays = 0;
+  const loop = ()=>{ if(currentAlarm !== ev || plays >= 12) return; playSound(ev); plays++; alarmTimer = setTimeout(loop, 7000); };
+  loop();
+}
+$("alarmDone").onclick = ()=>{
+  currentAlarm = null;
+  clearTimeout(alarmTimer);
+  $("alarm").classList.remove("show");
+  renderList();
+};
+
+/* ---------- Wake lock ---------- */
+let wakeLock = null;
+async function toggleWake(){
+  try{
+    if(wakeLock){ await wakeLock.release(); wakeLock = null; $("wakeBtn").textContent="📱 Тримати екран"; $("wakeBtn").classList.remove("on"); }
+    else{
+      wakeLock = await navigator.wakeLock.request("screen");
+      $("wakeBtn").textContent="📱 Екран активний ✓"; $("wakeBtn").classList.add("on");
+      wakeLock.addEventListener("release", ()=>{ wakeLock=null; $("wakeBtn").textContent="📱 Тримати екран"; $("wakeBtn").classList.remove("on"); });
+    }
+  }catch(e){ alert("Не вдалося утримати екран 😢"); }
+}
+$("wakeBtn").onclick = toggleWake;
+document.addEventListener("visibilitychange", async ()=>{
+  if(document.visibilityState === "visible" && $("wakeBtn").classList.contains("on") && !wakeLock){
+    try{ wakeLock = await navigator.wakeLock.request("screen"); }catch(e){}
+  }
+});
+
+/* ---------- Settings editor ---------- */
+let draft = [];
+function openSheet(){
+  draft = JSON.parse(JSON.stringify(events));
+  renderEditor();
+  $("sheet").classList.add("show");
+}
+function renderEditor(){
+  const ed = $("editor"); ed.innerHTML = "";
+  draft.forEach((ev, i)=>{
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "background:#faf7f7;border-radius:16px;padding:10px;margin:10px 0;";
+    const soundOpts = Object.keys(SOUNDS).map(k=>
+      '<option value="'+k+'"'+(ev.sound===k?" selected":"")+'>'+SOUNDS[k].label+'</option>').join("");
+    wrap.innerHTML =
+      '<div class="row">'+
+        '<div class="emoPick" data-i="'+i+'" title="Натисни, щоб змінити">'+escapeHtml(ev.emoji||"⏰")+'</div>'+
+        '<input type="text" data-f="name" data-i="'+i+'" value="'+escapeHtml(ev.name||"")+'" placeholder="Назва">'+
+        '<input type="time" data-f="time" data-i="'+i+'" value="'+escapeHtml(ev.time||"08:00")+'">'+
+      '</div>'+
+      '<div class="soundRow">'+
+        '<label>🔊 Звук:</label>'+
+        '<select data-f="sound" data-i="'+i+'">'+soundOpts+'</select>'+
+        '<button class="iconBtn" data-act="test" data-i="'+i+'" title="Послухати">▶</button>'+
+        '<label class="uploadLbl">＋ Свій звук<input type="file" accept="audio/*" data-f="file" data-i="'+i+'"></label>'+
+        '<button class="iconBtn danger" data-act="del" data-i="'+i+'" title="Видалити">🗑</button>'+
+      '</div>'+
+      (ev.customSound ? '<div class="hint">✅ Завантажено свій звук</div>' : '');
+    ed.appendChild(wrap);
+  });
+  ed.querySelectorAll("[data-f]").forEach(el=>{
+    const i = +el.dataset.i, f = el.dataset.f;
+    if(f === "file"){
+      el.onchange = ()=>{
+        const file = el.files[0]; if(!file) return;
+        if(file.size > 2.5*1024*1024){ alert("Файл завеликий (макс 2.5 МБ) 😢"); return; }
+        const r = new FileReader();
+        r.onload = ()=>{ draft[i].customSound = r.result; draft[i].sound = "custom"; renderEditor(); };
+        r.readAsDataURL(file);
+      };
+    } else {
+      el.onchange = ()=>{ draft[i][f] = el.value; if(f==="sound") draft[i].customSound = null; };
+    }
+  });
+  ed.querySelectorAll("[data-act]").forEach(btn=>{
+    const i = +btn.dataset.i;
+    if(btn.dataset.act === "del"){ btn.onclick = ()=>{ draft.splice(i,1); renderEditor(); }; }
+    if(btn.dataset.act === "test"){ btn.onclick = ()=>{ const ev = draft[i]; ev.customSound ? new Audio(ev.customSound).play().catch(()=>{}) : testSound(ev.sound); }; }
+  });
+  ed.querySelectorAll(".emoPick").forEach(p=>{
+    p.onclick = ()=>{
+      const cur = draft[+p.dataset.i].emoji || "⏰";
+      const set = ["☀️","🥣","🌳","🍲","😴","🍎","🍽️","🌙","🚿","📚","🎨","⚽","🧸","🦷","👕"];
+      const nx = set[(set.indexOf(cur)+1) % set.length];
+      draft[+p.dataset.i].emoji = nx; p.textContent = nx;
+    };
+  });
+}
+$("addBtn").onclick = ()=>{
+  draft.push({id:"e"+Date.now(), name:"Нова подія", time:"09:00", emoji:"⭐", sound:"fanfare"});
+  renderEditor();
+};
+$("saveBtn").onclick = ()=>{
+  events = draft.filter(e=> e.name && e.time).sort((a,b)=> a.time < b.time ? -1 : 1);
+  save(); renderList();
+  $("sheet").classList.remove("show");
+};
+$("closeBtn").onclick = ()=> $("sheet").classList.remove("show");
+$("settingsBtn").onclick = openSheet;
+$("sheet").addEventListener("click", e=>{ if(e.target === $("sheet")) $("sheet").classList.remove("show"); });
+
+/* ---------- Boot ---------- */
+tickClock(); renderList();
+setInterval(()=>{ tickClock(); checkAlarms(); }, 1000);
+setInterval(renderList, 30000);
+</script>
+</body>
+</html>
