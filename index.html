@@ -32,15 +32,15 @@
   #nextUp{
     margin:12px auto 0; max-width:560px; width:100%;
     background:linear-gradient(135deg,var(--accent),var(--accent2));
-    color:#fff; border-radius:var(--radius); padding:18px 20px;
-    display:flex; align-items:center; gap:14px;
+    color:#fff; border-radius:var(--radius); padding:28px 24px;
+    display:flex; align-items:center; gap:16px;
     box-shadow:0 8px 24px rgba(255,93,143,.35);
   }
-  #nextUp .emo{font-size:44px; flex:none;}
+  #nextUp .emo{font-size:58px; flex:none; line-height:1;}
   #nextUp .txt{flex:1; min-width:0;}
-  #nextUp .t1{font-size:13px; opacity:.9; line-height:1.3;}
-  #nextUp .t2{font-size:22px; font-weight:700; line-height:1.25; overflow-wrap:break-word;}
-  #nextUp .t3{font-size:16px; font-weight:600; line-height:1.3; font-variant-numeric:tabular-nums;}
+  #nextUp .t1{font-size:14px; opacity:.9; line-height:1.35;}
+  #nextUp .t2{font-size:26px; font-weight:700; line-height:1.3; overflow-wrap:break-word;}
+  #nextUp .t3{font-size:18px; font-weight:600; line-height:1.35; font-variant-numeric:tabular-nums;}
   main{width:100%; max-width:560px; padding:14px 0 90px;}
   .ev{
     background:var(--card); border-radius:var(--radius);
@@ -170,7 +170,7 @@
 <footer>
   <button class="fab" id="settingsBtn">⚙️ Налаштування</button>
 </footer>
-<div class="ver">версія 6 • 20.09.2026</div>
+<div class="ver">версія 7 • 20.09.2026</div>
 
 <div id="alarm">
   <div class="big" id="alarmEmo">☀️</div>
@@ -316,7 +316,7 @@ function renderList(){
       '<div class="info"><div class="name">'+escapeHtml(ev.name)+'</div>'+
       '<div class="time">'+escapeHtml(ev.time)+'</div></div>'+
       '<div class="badge">'+badge+'</div>'+
-      '<button class="play" title="Послухати звук">▶</button>';
+      '<button class="play" title="Послухати звук">▶️</button>';
     div.querySelector(".play").onclick = ()=> playSound(ev);
     list.appendChild(div);
   });
@@ -393,7 +393,7 @@ function renderEditor(){
       '<div class="soundRow">'+
         '<label>🔊 Звук:</label>'+
         '<select data-f="sound" data-i="'+i+'">'+soundOpts+'</select>'+
-        '<button class="iconBtn" data-act="test" data-i="'+i+'" title="Послухати">▶</button>'+
+        '<button class="iconBtn" data-act="test" data-i="'+i+'" title="Послухати">▶️</button>'+
         '<label class="uploadLbl">＋ Свій звук<input type="file" accept="audio/*" data-f="file" data-i="'+i+'"></label>'+
         '<button class="iconBtn danger" data-act="del" data-i="'+i+'" title="Видалити">🗑</button>'+
       '</div>'+
