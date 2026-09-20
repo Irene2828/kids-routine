@@ -25,7 +25,15 @@
     min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; align-items:center;
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   }
-  #app{width:100%; display:flex; flex-direction:column; align-items:center; padding:0 16px;}
+  #app{width:100%; display:flex; flex-direction:column; align-items:center; padding:0 16px; position:relative;}
+  #gearBtn{
+    position:absolute; top:calc(env(safe-area-inset-top) + 12px); right:14px; z-index:5;
+    width:46px; height:46px; border:none; background:transparent; cursor:pointer;
+    font-size:27px; line-height:1; color:#8e8e93;
+    display:flex; align-items:center; justify-content:center;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #gearBtn:active{opacity:.6;}
   #cover{display:none;}
   /* Wide screens (tablet landscape): photo on the left, app content on the right */
   @media (min-width:900px){
@@ -37,7 +45,6 @@
       height:100vh; height:100dvh; min-height:100vh;
     }
     #app{flex:1; min-width:0; padding:0 20px;}
-    footer{left:40%;}
   }
   header{width:100%; max-width:560px; text-align:center; padding:18px 8px 6px;}
   header h1{margin:0; font-size:30px; letter-spacing:.5px;}
@@ -55,7 +62,7 @@
   #nextUp .t1{font-size:14px; opacity:.9; line-height:1.35;}
   #nextUp .t2{font-size:26px; font-weight:700; line-height:1.3; overflow-wrap:break-word;}
   #nextUp .t3{font-size:18px; font-weight:600; line-height:1.35; font-variant-numeric:tabular-nums;}
-  main{width:100%; max-width:560px; padding:14px 0 90px;}
+  main{width:100%; max-width:560px; padding:14px 0 28px;}
   .ev{
     background:var(--card); border-radius:var(--radius);
     padding:14px 16px; margin:10px 0;
@@ -75,24 +82,13 @@
   .ev.next .badge{background:#e7f6fd; color:#1b9ad6;}
   .ev .play{
     flex:none; width:48px; height:48px; border-radius:50%; border:none;
-    background:linear-gradient(135deg,var(--blue),var(--green));
-    font-size:20px; color:#fff; cursor:pointer;
-    box-shadow:0 4px 12px rgba(76,201,240,.4);
+    background:#34C759; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 12px rgba(52,199,89,.45);
   }
+  .ev .play svg{display:block;}
   .ev .play:active{transform:scale(.92);}
-  footer{
-    position:fixed; bottom:0; left:0; right:0;
-    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
-    display:flex; justify-content:center; gap:12px;
-    background:linear-gradient(180deg,transparent,rgba(255,247,230,.95) 40%);
-  }
-  .fab{
-    border:none; border-radius:999px; padding:14px 22px; font-size:17px; font-weight:700;
-    cursor:pointer; color:#fff;
-    box-shadow:0 6px 18px rgba(0,0,0,.18);
-  }
-  .ver{text-align:center; color:var(--muted); font-size:12px; padding:70px 0 18px;}
-  #settingsBtn{background:linear-gradient(135deg,#7b6cf0,#4cc9f0);}
+  .ver{text-align:center; color:var(--muted); font-size:12px; padding:18px 0;}
   /* Overlay alarm */
   #alarm{
     position:fixed; top:0; left:0; right:0; bottom:0; z-index:50; display:none;
@@ -144,6 +140,8 @@
   .row select{font-size:15px; padding:10px 8px; border:2px solid #eee; border-radius:14px; max-width:150px;}
   .emoPick{font-size:22px; width:52px; text-align:center; border:2px solid #eee; border-radius:14px; padding:6px 0; background:#fff;}
   .iconBtn{border:none; background:#f4f1f1; border-radius:12px; font-size:18px; padding:10px 12px; cursor:pointer;}
+  .iconBtn.playMini{background:#34C759; border-radius:50%; padding:0; width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center;}
+  .iconBtn.playMini svg{display:block;}
   .iconBtn.danger{background:#ffe3ea;}
   #addBtn{
     width:100%; border:2px dashed #d8cfcf; background:none; border-radius:16px;
@@ -166,6 +164,7 @@
 <body>
 <div id="cover"></div>
 <div id="app">
+<button id="gearBtn" title="Налаштування">⚙️</button>
 <header>
   <h1>☀️ Режим дня</h1>
   <div id="clock">--:--</div>
@@ -183,10 +182,7 @@
 
 <main id="list"></main>
 
-<footer>
-  <button class="fab" id="settingsBtn">⚙️ Налаштування</button>
-</footer>
-<div class="ver">версія 8 • 20.09.2026</div>
+<div class="ver">версія 9 • 20.09.2026</div>
 </div><!-- /app -->
 
 <div id="alarm">
@@ -211,6 +207,9 @@
 
 <script>
 "use strict";
+/* Modern green play icons (inline SVG — crisp on old iOS too) */
+const PLAY_SVG='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M8 5v14l11-7z" fill="#fff"/></svg>';
+const PLAY_SVG_SM='<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M8 5v14l11-7z" fill="#fff"/></svg>';
 /* ---------- Data ---------- */
 const LS_KEY = "kidsRoutine.v1";
 const DEFAULT_EVENTS = [
@@ -333,7 +332,7 @@ function renderList(){
       '<div class="info"><div class="name">'+escapeHtml(ev.name)+'</div>'+
       '<div class="time">'+escapeHtml(ev.time)+'</div></div>'+
       '<div class="badge">'+badge+'</div>'+
-      '<button class="play" title="Послухати звук">▶️</button>';
+      '<button class="play" title="Послухати звук">'+PLAY_SVG+'</button>';
     div.querySelector(".play").onclick = ()=> playSound(ev);
     list.appendChild(div);
   });
@@ -410,7 +409,7 @@ function renderEditor(){
       '<div class="soundRow">'+
         '<label>🔊 Звук:</label>'+
         '<select data-f="sound" data-i="'+i+'">'+soundOpts+'</select>'+
-        '<button class="iconBtn" data-act="test" data-i="'+i+'" title="Послухати">▶️</button>'+
+        '<button class="iconBtn playMini" data-act="test" data-i="'+i+'" title="Послухати">'+PLAY_SVG_SM+'</button>'+
         '<label class="uploadLbl">＋ Свій звук<input type="file" accept="audio/*" data-f="file" data-i="'+i+'"></label>'+
         '<button class="iconBtn danger" data-act="del" data-i="'+i+'" title="Видалити">🗑</button>'+
       '</div>'+
@@ -456,7 +455,7 @@ $("saveBtn").onclick = ()=>{
 };
 $("closeBtn").onclick = ()=> $("sheet").classList.remove("show");
 $("sheetX").onclick = ()=> $("sheet").classList.remove("show");
-$("settingsBtn").onclick = openSheet;
+$("gearBtn").onclick = openSheet;
 $("sheet").addEventListener("click", e=>{ if(e.target === $("sheet")) $("sheet").classList.remove("show"); });
 
 /* ---------- Add event via link: #add=1&time=HH:MM&name=..&emoji=..&sound=.. ---------- */
