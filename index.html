@@ -23,7 +23,21 @@
       linear-gradient(160deg,rgba(255,93,143,.25),rgba(255,159,28,.25) 55%,rgba(255,209,102,.25)),
       linear-gradient(160deg,var(--bg1),var(--bg2));
     min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; align-items:center;
-    padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+  #app{width:100%; display:flex; flex-direction:column; align-items:center; padding:0 16px;}
+  #cover{display:none;}
+  /* Wide screens (tablet landscape): photo on the left, app content on the right */
+  @media (min-width:900px){
+    body{flex-direction:row; align-items:flex-start; justify-content:flex-start;}
+    #cover{
+      display:block; flex:none; width:40%;
+      background:url("cover.jpg") center/cover no-repeat;
+      position:-webkit-sticky; position:sticky; top:0;
+      height:100vh; height:100dvh; min-height:100vh;
+    }
+    #app{flex:1; min-width:0; padding:0 20px;}
+    footer{left:40%;}
   }
   header{width:100%; max-width:560px; text-align:center; padding:18px 8px 6px;}
   header h1{margin:0; font-size:30px; letter-spacing:.5px;}
@@ -150,6 +164,8 @@
 </style>
 </head>
 <body>
+<div id="cover"></div>
+<div id="app">
 <header>
   <h1>☀️ Режим дня</h1>
   <div id="clock">--:--</div>
@@ -170,7 +186,8 @@
 <footer>
   <button class="fab" id="settingsBtn">⚙️ Налаштування</button>
 </footer>
-<div class="ver">версія 7 • 20.09.2026</div>
+<div class="ver">версія 8 • 20.09.2026</div>
+</div><!-- /app -->
 
 <div id="alarm">
   <div class="big" id="alarmEmo">☀️</div>
