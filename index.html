@@ -243,8 +243,24 @@ function playSound(ev){
   }catch(e){}
 }
 function testSound(key){ try{ (SOUNDS[key]||SOUNDS.fanfare).play(); }catch(e){} }
-// unlock audio on first touch
-window.addEventListener("pointerdown", ()=>{ try{ ac(); }catch(e){} }, {once:true});
+// unlock audio on touch (iOS only allows sound after a tap) + keep it alive
+// note: iOS 12 has no pointerdown, so listen to touchstart/mousedown too
+let keepOsc = null;
+function unlockAudio(){
+  try{
+    const c = ac();
+    if(c.state === "suspended"){ c.resume().catch(()=>{}); }
+    if(!keepOsc){
+      keepOsc = c.createOscillator();
+      const g = c.createGain();
+      g.gain.value = 0.0000001; // silent keepalive so iOS doesn't suspend audio
+      keepOsc.connect(g).connect(c.destination);
+      keepOsc.start();
+    }
+  }catch(e){}
+}
+["pointerdown","touchstart","mousedown"].forEach(t=> window.addEventListener(t, unlockAudio, {passive:true}));
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState === "visible") unlockAudio(); });
 
 /* ---------- Clock & list ---------- */
 const $ = id => document.getElementById(id);
@@ -311,7 +327,7 @@ function fireAlarm(ev){
   renderList();
   // play sound in a loop until dismissed (max ~90s)
   let plays = 0;
-  const loop = ()=>{ if(currentAlarm !== ev || plays >= 12) return; playSound(ev); plays++; alarmTimer = setTimeout(loop, 7000); };
+  const loop = ()=>{ if(currentAlarm !== ev || plays >= 12) return; unlockAudio(); playSound(ev); plays++; alarmTimer = setTimeout(loop, 7000); };
   loop();
 }
 $("alarmDone").onclick = ()=>{
@@ -325,13 +341,14 @@ $("alarmDone").onclick = ()=>{
 let wakeLock = null;
 async function toggleWake(){
   try{
+    if(!("wakeLock" in navigator)) throw new Error("unsupported");
     if(wakeLock){ await wakeLock.release(); wakeLock = null; $("wakeBtn").textContent="📱 Тримати екран"; $("wakeBtn").classList.remove("on"); }
     else{
       wakeLock = await navigator.wakeLock.request("screen");
       $("wakeBtn").textContent="📱 Екран активний ✓"; $("wakeBtn").classList.add("on");
       wakeLock.addEventListener("release", ()=>{ wakeLock=null; $("wakeBtn").textContent="📱 Тримати екран"; $("wakeBtn").classList.remove("on"); });
     }
-  }catch(e){ alert("Не вдалося утримати екран 😢"); }
+  }catch(e){ alert("Цей пристрій не вміє сам тримати екран — вимкни автоблокування в Параметрах 📱"); }
 }
 $("wakeBtn").onclick = toggleWake;
 document.addEventListener("visibilitychange", async ()=>{
