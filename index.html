@@ -149,6 +149,11 @@
   .iconBtn.playMini{background:#40E0D0; border-radius:50%; padding:0; width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center;}
   .iconBtn.playMini svg{display:block;}
   .iconBtn.danger{background:#ffe3ea;}
+  #photoMgr{background:#faf7f7;border-radius:16px;padding:12px;margin:4px 0 12px;}
+  #photoMgr h3{margin:0 0 10px;font-size:17px;}
+  #photoGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
+  .pth{position:relative;width:74px;height:74px;border-radius:12px;background:center/cover no-repeat #e8e0e0;flex:none;}
+  .pthX{position:absolute;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;border:none;background:#ff5d8f;color:#fff;font-size:13px;line-height:1;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25);}
   #addBtn{
     width:100%; border:2px dashed #d8cfcf; background:none; border-radius:16px;
     padding:14px; font-size:17px; font-weight:700; color:var(--muted); cursor:pointer; margin-top:6px;
@@ -188,7 +193,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 10 • 20.09.2026</div>
+<div class="ver">версія 11 • 20.09.2026</div>
 </div><!-- /app -->
 
 <div id="alarm">
@@ -201,6 +206,25 @@
 <div id="sheet">
   <div id="sheetCard">
     <div id="sheetHead"><h2>⚙️ Розклад дня</h2><button id="sheetX" aria-label="Закрити">✕</button></div>
+    <div id="photoMgr">
+      <h3>🖼️ Фото для слайдшоу</h3>
+      <div id="photoGrid"></div>
+      <div class="row">
+        <label class="uploadLbl">＋ Додати фото<input type="file" id="photoAdd" accept="image/*"></label>
+        <button class="iconBtn" id="photoReset" title="Показати знову приховані фото">↩️ Приховані</button>
+      </div>
+      <div class="soundRow">
+        <label>🔁 Зміна фото кожні:</label>
+        <select id="slideInt">
+          <option value="15">15 секунд</option>
+          <option value="60">1 хвилина</option>
+          <option value="900">15 хвилин</option>
+          <option value="3600">1 година</option>
+          <option value="0">Вимкнено</option>
+        </select>
+      </div>
+      <p class="hint">💡 Фото й налаштування зберігаються лише на цьому пристрої — керуй ними з планшета.</p>
+    </div>
     <div id="editor"></div>
     <button id="addBtn">＋ Додати подію</button>
     <div class="sheetActions">
@@ -396,6 +420,7 @@ $("alarmDone").addEventListener("touchstart", dismissAlarm, {passive:true});
 let draft = [];
 function openSheet(){
   draft = JSON.parse(JSON.stringify(events));
+  renderPhotoMgr();
   renderEditor();
   $("sheet").classList.add("show");
 }
@@ -534,30 +559,116 @@ async function syncRemoteAlarms(){
 }
 
 /* ---------- Photo slideshow (left panel, wide screens) ---------- */
-const PHOTOS = ["cover.jpg","photos/p1.jpg","photos/p2.jpg","photos/p3.jpg",
-                "photos/p4.jpg","photos/p5.jpg","photos/p6.jpg","photos/p7.jpg","photos/p8.jpg"];
+const DEFAULT_PHOTOS = ["cover.jpg","photos/p1.jpg","photos/p2.jpg","photos/p3.jpg",
+                        "photos/p4.jpg","photos/p5.jpg","photos/p6.jpg","photos/p7.jpg","photos/p8.jpg"];
+const HIDE_KEY = "kidsRoutine.hiddenPhotos.v1";
+const CPHOTO_KEY = "kidsRoutine.customPhotos.v1";
+const SINT_KEY = "kidsRoutine.slideSec.v1";
+function hiddenPhotos(){
+  try{ const a = JSON.parse(localStorage.getItem(HIDE_KEY) || "[]"); return Array.isArray(a) ? a : []; }catch(e){ return []; }
+}
+function customPhotos(){
+  try{ const a = JSON.parse(localStorage.getItem(CPHOTO_KEY) || "[]"); return Array.isArray(a) ? a : []; }catch(e){ return []; }
+}
+function slideSec(){
+  const v = parseInt(localStorage.getItem(SINT_KEY) || "15", 10);
+  return isNaN(v) ? 15 : v;
+}
+function slideList(){
+  const hid = hiddenPhotos();
+  const list = DEFAULT_PHOTOS.filter(p => hid.indexOf(p) < 0);
+  customPhotos().forEach(c => { if(c && c.dataUrl) list.push(c.dataUrl); });
+  return list.length ? list : ["cover.jpg"];
+}
+let slideTimer = null;
 function startSlideshow(){
   try{
     const layers = document.querySelectorAll("#cover .slide");
     if(!layers || layers.length < 2) return;
+    if(slideTimer){ clearInterval(slideTimer); slideTimer = null; }
+    let list = slideList(), idx = 0, turn = 0;
     // preload so the old tablet doesn't flash on each switch
-    PHOTOS.forEach(p=>{ const im = new Image(); im.src = p; });
-    let idx = 0, turn = 0;
-    setInterval(()=>{
-      idx = (idx + 1) % PHOTOS.length;
-      const show = layers[turn % 2], hide = layers[(turn + 1) % 2];
-      show.style.backgroundImage = "url('" + PHOTOS[idx] + "')";
-      show.classList.add("on");
-      hide.classList.remove("on");
-      turn++;
-    }, 15000);
+    list.forEach(p => { const im = new Image(); im.src = p; });
+    layers[0].style.backgroundImage = "url('" + list[0] + "')";
+    layers[0].classList.add("on");
+    layers[1].classList.remove("on");
+    const sec = slideSec();
+    if(sec > 0){
+      slideTimer = setInterval(()=>{
+        list = slideList();
+        idx = (idx + 1) % list.length;
+        const show = layers[turn % 2], hide = layers[(turn + 1) % 2];
+        show.style.backgroundImage = "url('" + list[idx] + "')";
+        show.classList.add("on");
+        hide.classList.remove("on");
+        turn++;
+        const nx = new Image(); nx.src = list[(idx + 1) % list.length];
+      }, sec * 1000);
+    }
   }catch(e){}
+}
+
+/* ---------- Photo manager (in settings) ---------- */
+function photoThumb(src, isCustom, id){
+  const d = document.createElement("div");
+  d.className = "pth";
+  d.style.backgroundImage = "url('" + src + "')";
+  const x = document.createElement("button");
+  x.className = "pthX"; x.textContent = "✕"; x.title = "Прибрати фото";
+  x.onclick = ()=>{
+    if(isCustom){
+      const arr = customPhotos().filter(c => c.id !== id);
+      try{ localStorage.setItem(CPHOTO_KEY, JSON.stringify(arr)); }catch(e){}
+    }else{
+      const h = hiddenPhotos();
+      if(h.indexOf(src) < 0){ h.push(src); try{ localStorage.setItem(HIDE_KEY, JSON.stringify(h)); }catch(e){} }
+    }
+    renderPhotoMgr(); startSlideshow();
+  };
+  d.appendChild(x);
+  return d;
+}
+function renderPhotoMgr(){
+  const g = $("photoGrid");
+  if(!g) return;
+  g.innerHTML = "";
+  const hid = hiddenPhotos();
+  DEFAULT_PHOTOS.forEach(p => { if(hid.indexOf(p) < 0) g.appendChild(photoThumb(p, false)); });
+  customPhotos().forEach(c => { if(c && c.dataUrl) g.appendChild(photoThumb(c.dataUrl, true, c.id)); });
+  const sel = $("slideInt");
+  if(sel) sel.value = String(slideSec());
+}
+function handlePhotoFile(file){
+  if(!file || (file.type || "").indexOf("image/") !== 0) return;
+  const img = new Image();
+  img.onload = ()=>{
+    try{
+      const maxW = 1170;
+      let w = img.width, h = img.height;
+      if(w > maxW){ h = Math.round(h * maxW / w); w = maxW; }
+      const cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      cv.getContext("2d").drawImage(img, 0, 0, w, h);
+      const url = cv.toDataURL("image/jpeg", 0.82);
+      const arr = customPhotos();
+      arr.push({id:"p" + Date.now(), dataUrl:url});
+      localStorage.setItem(CPHOTO_KEY, JSON.stringify(arr));
+      renderPhotoMgr(); startSlideshow();
+      toast("✅ Фото додано");
+    }catch(e){ alert("Не вдалося зберегти фото (можливо, закінчилась пам'ять) 😢"); }
+    try{ URL.revokeObjectURL(img.src); }catch(e){}
+  };
+  img.onerror = ()=>{ alert("Не вдалося прочитати фото 😢"); };
+  img.src = URL.createObjectURL(file);
 }
 
 /* ---------- Boot ---------- */
 applyLinkAdd();
 tickClock(); renderList();
 startSlideshow();
+$("photoAdd").addEventListener("change", e=>{ handlePhotoFile(e.target.files[0]); e.target.value = ""; });
+$("slideInt").addEventListener("change", ()=>{ try{ localStorage.setItem(SINT_KEY, $("slideInt").value); }catch(e){} startSlideshow(); });
+$("photoReset").onclick = ()=>{ try{ localStorage.removeItem(HIDE_KEY); }catch(e){} renderPhotoMgr(); startSlideshow(); toast("↩️ Приховані фото повернуто"); };
 syncRemoteAlarms();
 setInterval(syncRemoteAlarms, 60000);
 setInterval(()=>{ tickClock(); checkAlarms(); }, 1000);
