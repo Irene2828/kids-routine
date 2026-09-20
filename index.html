@@ -19,7 +19,9 @@
   body{
     margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     color:var(--ink);
-    background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    background:
+      linear-gradient(160deg,rgba(255,93,143,.25),rgba(255,159,28,.25) 55%,rgba(255,209,102,.25)),
+      linear-gradient(160deg,var(--bg1),var(--bg2));
     min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; align-items:center;
     padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
   }
@@ -30,14 +32,15 @@
   #nextUp{
     margin:12px auto 0; max-width:560px; width:100%;
     background:linear-gradient(135deg,var(--accent),var(--accent2));
-    color:#fff; border-radius:var(--radius); padding:14px 18px;
+    color:#fff; border-radius:var(--radius); padding:18px 20px;
     display:flex; align-items:center; gap:14px;
     box-shadow:0 8px 24px rgba(255,93,143,.35);
   }
-  #nextUp .emo{font-size:40px;}
-  #nextUp .t1{font-size:13px; opacity:.9;}
-  #nextUp .t2{font-size:20px; font-weight:700;}
-  #nextUp .t3{font-size:15px; font-weight:600;}
+  #nextUp .emo{font-size:44px; flex:none;}
+  #nextUp .txt{flex:1; min-width:0;}
+  #nextUp .t1{font-size:13px; opacity:.9; line-height:1.3;}
+  #nextUp .t2{font-size:22px; font-weight:700; line-height:1.25; overflow-wrap:break-word;}
+  #nextUp .t3{font-size:16px; font-weight:600; line-height:1.3; font-variant-numeric:tabular-nums;}
   main{width:100%; max-width:560px; padding:14px 0 90px;}
   .ev{
     background:var(--card); border-radius:var(--radius);
@@ -76,8 +79,6 @@
   }
   .ver{text-align:center; color:var(--muted); font-size:12px; padding:70px 0 18px;}
   #settingsBtn{background:linear-gradient(135deg,#7b6cf0,#4cc9f0);}
-  #wakeBtn{background:linear-gradient(135deg,var(--green),#7bd88f);}
-  #wakeBtn.on{background:linear-gradient(135deg,#2ec4b6,#1d9e8f);}
   /* Overlay alarm */
   #alarm{
     position:fixed; top:0; left:0; right:0; bottom:0; z-index:50; display:none;
@@ -157,7 +158,7 @@
 
 <div id="nextUp" style="display:none">
   <div class="emo" id="nuEmo">⏰</div>
-  <div>
+  <div class="txt">
     <div class="t1">Далі за розкладом</div>
     <div class="t2" id="nuName"></div>
     <div class="t3" id="nuTime"></div>
@@ -167,10 +168,9 @@
 <main id="list"></main>
 
 <footer>
-  <button class="fab" id="wakeBtn">📱 Тримати екран</button>
   <button class="fab" id="settingsBtn">⚙️ Налаштування</button>
 </footer>
-<div class="ver">версія 5 • 20.09.2026</div>
+<div class="ver">версія 6 • 20.09.2026</div>
 
 <div id="alarm">
   <div class="big" id="alarmEmo">☀️</div>
@@ -188,7 +188,7 @@
       <button id="closeBtn">Скасувати</button>
       <button id="saveBtn">Зберегти 💾</button>
     </div>
-    <p class="hint">💡 Порада: щоб звук лунав вчасно, тримай цю сторінку відкритою — натисни «📱 Тримати екран». На заблокованому телефоні браузер не може будити звуком (обмеження iOS).</p>
+    <p class="hint">💡 Порада: щоб звук лунав вчасно, тримай цю сторінку відкритою і вимкни автоблокування екрана (Параметри → Екран і яскравість → Автоблокування → Ніколи). На заблокованому телефоні браузер не може будити звуком (обмеження iOS).</p>
   </div>
 </div>
 
@@ -369,26 +369,6 @@ function dismissAlarm(){
 $("alarmDone").onclick = dismissAlarm;
 // instant response on old tablets even if click is delayed
 $("alarmDone").addEventListener("touchstart", dismissAlarm, {passive:true});
-
-/* ---------- Wake lock ---------- */
-let wakeLock = null;
-async function toggleWake(){
-  try{
-    if(!("wakeLock" in navigator)) throw new Error("unsupported");
-    if(wakeLock){ await wakeLock.release(); wakeLock = null; $("wakeBtn").textContent="📱 Тримати екран"; $("wakeBtn").classList.remove("on"); }
-    else{
-      wakeLock = await navigator.wakeLock.request("screen");
-      $("wakeBtn").textContent="📱 Екран активний ✓"; $("wakeBtn").classList.add("on");
-      wakeLock.addEventListener("release", ()=>{ wakeLock=null; $("wakeBtn").textContent="📱 Тримати екран"; $("wakeBtn").classList.remove("on"); });
-    }
-  }catch(e){ alert("Цей пристрій не вміє сам тримати екран — вимкни автоблокування в Параметрах 📱"); }
-}
-$("wakeBtn").onclick = toggleWake;
-document.addEventListener("visibilitychange", async ()=>{
-  if(document.visibilityState === "visible" && $("wakeBtn").classList.contains("on") && !wakeLock){
-    try{ wakeLock = await navigator.wakeLock.request("screen"); }catch(e){}
-  }
-});
 
 /* ---------- Settings editor ---------- */
 let draft = [];
