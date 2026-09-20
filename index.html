@@ -93,7 +93,7 @@
   #alarm h2{font-size:34px; margin:14px 0 6px;}
   #alarm p{font-size:18px; opacity:.95; margin:0 0 26px;}
   #alarmDone{
-    border:none; border-radius:999px; padding:18px 54px; font-size:22px; font-weight:800;
+    border:none; border-radius:999px; padding:22px 64px; font-size:24px; font-weight:800;
     background:#fff; color:#ff5d8f; cursor:pointer;
     box-shadow:0 10px 30px rgba(0,0,0,.25);
   }
@@ -170,7 +170,7 @@
   <button class="fab" id="wakeBtn">📱 Тримати екран</button>
   <button class="fab" id="settingsBtn">⚙️ Налаштування</button>
 </footer>
-<div class="ver">версія 4 • 20.09.2026</div>
+<div class="ver">версія 5 • 20.09.2026</div>
 
 <div id="alarm">
   <div class="big" id="alarmEmo">☀️</div>
@@ -223,6 +223,15 @@ function ac(){
   if(AC.state === "suspended") AC.resume();
   return AC;
 }
+let activeNodes = []; // oscillators currently sounding — stoppable on dismiss
+let activeAudioEl = null;
+function stopSound(){
+  try{
+    activeNodes.forEach(o=>{ try{ o.stop(); }catch(e){} });
+    activeNodes = [];
+    if(activeAudioEl){ try{ activeAudioEl.pause(); }catch(e){} activeAudioEl = null; }
+  }catch(e){}
+}
 function tone(freq, t0, dur, type, vol){
   const c = ac(), o = c.createOscillator(), g = c.createGain();
   o.type = type || "triangle"; o.frequency.value = freq;
@@ -231,6 +240,8 @@ function tone(freq, t0, dur, type, vol){
   g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   o.connect(g).connect(c.destination);
   o.start(t0); o.stop(t0 + dur + 0.05);
+  activeNodes.push(o);
+  o.onended = ()=>{ const i = activeNodes.indexOf(o); if(i >= 0) activeNodes.splice(i, 1); };
 }
 const N = {C4:261.63,D4:293.66,E4:329.63,F4:349.23,G4:392.00,A4:440.00,B4:493.88,
            C5:523.25,D5:587.33,E5:659.25,F5:698.46,G5:783.99,A5:880.00,B5:987.77,C6:1046.5};
@@ -249,7 +260,9 @@ const SOUNDS = {
 function playSound(ev){
   try{
     if(ev.customSound){ // dataURL uploaded by user
+      stopSound();
       const a = new Audio(ev.customSound);
+      activeAudioEl = a;
       a.play().catch(()=>{});
       return;
     }
@@ -334,6 +347,8 @@ function checkAlarms(){
   }
 }
 function fireAlarm(ev){
+  stopSound();
+  if(alarmTimer){ clearTimeout(alarmTimer); alarmTimer = null; }
   currentAlarm = ev;
   $("alarmEmo").textContent = ev.emoji || "⏰";
   $("alarmName").textContent = ev.name + "!";
@@ -344,12 +359,16 @@ function fireAlarm(ev){
   const loop = ()=>{ if(currentAlarm !== ev || plays >= 12) return; unlockAudio(); playSound(ev); plays++; alarmTimer = setTimeout(loop, 7000); };
   loop();
 }
-$("alarmDone").onclick = ()=>{
+function dismissAlarm(){
+  stopSound();
   currentAlarm = null;
-  clearTimeout(alarmTimer);
+  if(alarmTimer){ clearTimeout(alarmTimer); alarmTimer = null; }
   $("alarm").classList.remove("show");
   renderList();
-};
+}
+$("alarmDone").onclick = dismissAlarm;
+// instant response on old tablets even if click is delayed
+$("alarmDone").addEventListener("touchstart", dismissAlarm, {passive:true});
 
 /* ---------- Wake lock ---------- */
 let wakeLock = null;
