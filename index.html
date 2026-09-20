@@ -386,7 +386,7 @@ function renderEditor(){
   });
   ed.querySelectorAll("[data-act]").forEach(btn=>{
     const i = +btn.dataset.i;
-    if(btn.dataset.act === "del"){ btn.onclick = ()=>{ draft.splice(i,1); renderEditor(); }; }
+    if(btn.dataset.act === "del"){ btn.onclick = ()=>{ const ev = draft[i]; if(ev && ev.id) rememberDismissed(ev.id); draft.splice(i,1); renderEditor(); }; }
     if(btn.dataset.act === "test"){ btn.onclick = ()=>{ const ev = draft[i]; ev.customSound ? new Audio(ev.customSound).play().catch(()=>{}) : testSound(ev.sound); }; }
   });
   ed.querySelectorAll(".emoPick").forEach(p=>{
@@ -434,9 +434,57 @@ function applyLinkAdd(){
   }catch(e){}
 }
 
+/* ---------- Remote alarms added by Lola (alarms.json in the repo) ---------- */
+const REMOTE_URL = "https://raw.githubusercontent.com/Irene2828/kids-routine/main/alarms.json";
+const DISMISS_KEY = "kidsRoutine.dismissed.v1";
+function dismissedIds(){
+  try{ const a = JSON.parse(localStorage.getItem(DISMISS_KEY) || "[]"); return Array.isArray(a) ? a : []; }catch(e){ return []; }
+}
+function rememberDismissed(id){
+  try{ const a = dismissedIds(); if(a.indexOf(id) < 0){ a.push(id); localStorage.setItem(DISMISS_KEY, JSON.stringify(a)); } }catch(e){}
+}
+function toast(msg){
+  let t = document.getElementById("toast");
+  if(!t){
+    t = document.createElement("div");
+    t.id = "toast";
+    t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#3a2e2e;color:#fff;padding:12px 20px;border-radius:999px;font-size:15px;font-weight:700;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .3s;max-width:90vw;text-align:center;";
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = "1";
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>{ t.style.opacity = "0"; }, 4000);
+}
+async function syncRemoteAlarms(){
+  try{
+    const r = await fetch(REMOTE_URL + "?t=" + Date.now(), {cache:"no-store"});
+    if(!r.ok) return;
+    const arr = await r.json();
+    if(!Array.isArray(arr)) return;
+    const dismissed = dismissedIds();
+    let added = 0, lastName = "";
+    arr.forEach(a=>{
+      if(!a || !a.id || !/^\d{2}:\d{2}$/.test(a.time || "")) return;
+      if(dismissed.indexOf(a.id) >= 0) return;
+      if(events.some(e => e.id === a.id)) return;
+      const sound = SOUNDS[a.sound] ? a.sound : "fanfare";
+      events.push({id:String(a.id), name:String(a.name || "Нова подія"), time:a.time, emoji:String(a.emoji || "⏰"), sound:sound});
+      added++; lastName = String(a.name || "");
+    });
+    if(added){
+      events.sort((a,b)=> a.time < b.time ? -1 : 1);
+      save(); renderList();
+      toast(added === 1 ? "✨ Lola додала: " + lastName : "✨ Lola додала " + added + " будильники!");
+    }
+  }catch(e){}
+}
+
 /* ---------- Boot ---------- */
 applyLinkAdd();
 tickClock(); renderList();
+syncRemoteAlarms();
+setInterval(syncRemoteAlarms, 60000);
 setInterval(()=>{ tickClock(); checkAlarms(); }, 1000);
 setInterval(renderList, 30000);
 </script>
