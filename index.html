@@ -411,7 +411,31 @@ $("closeBtn").onclick = ()=> $("sheet").classList.remove("show");
 $("settingsBtn").onclick = openSheet;
 $("sheet").addEventListener("click", e=>{ if(e.target === $("sheet")) $("sheet").classList.remove("show"); });
 
+/* ---------- Add event via link: #add=1&time=HH:MM&name=..&emoji=..&sound=.. ---------- */
+function applyLinkAdd(){
+  try{
+    const h = location.hash || "";
+    if(h.indexOf("add=") < 0) return;
+    const q = new URLSearchParams(h.charAt(0) === "#" ? h.slice(1) : h);
+    if(q.get("add") === null) return;
+    const time = (q.get("time") || "").trim();
+    if(!/^\d{2}:\d{2}$/.test(time)) return;
+    const name = (q.get("name") || "").trim() || "Нова подія";
+    const emoji = (q.get("emoji") || "").trim() || "⏰";
+    let sound = (q.get("sound") || "").trim() || "fanfare";
+    if(!SOUNDS[sound]) sound = "fanfare";
+    const dup = events.some(e => e.time === time && e.name === name);
+    if(!dup){
+      events.push({id:"e"+Date.now(), name:name, time:time, emoji:emoji, sound:sound});
+      events.sort((a,b)=> a.time < b.time ? -1 : 1);
+      save();
+    }
+    try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+  }catch(e){}
+}
+
 /* ---------- Boot ---------- */
+applyLinkAdd();
 tickClock(); renderList();
 setInterval(()=>{ tickClock(); checkAlarms(); }, 1000);
 setInterval(renderList, 30000);
