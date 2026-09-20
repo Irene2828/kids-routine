@@ -40,10 +40,16 @@
     body{flex-direction:row; align-items:flex-start; justify-content:flex-start;}
     #cover{
       display:block; flex:none; width:40%;
-      background:url("cover.jpg") center/cover no-repeat;
       position:-webkit-sticky; position:sticky; top:0;
       height:100vh; height:100dvh; min-height:100vh;
+      overflow:hidden; background:#ffe8f0;
     }
+    #cover .slide{
+      position:absolute; top:0; left:0; right:0; bottom:0;
+      background:center/cover no-repeat;
+      opacity:0; transition:opacity 1.4s ease;
+    }
+    #cover .slide.on{opacity:1;}
     #app{flex:1; min-width:0; padding:0 20px;}
   }
   header{width:100%; max-width:560px; text-align:center; padding:18px 8px 6px;}
@@ -82,9 +88,9 @@
   .ev.next .badge{background:#e7f6fd; color:#1b9ad6;}
   .ev .play{
     flex:none; width:48px; height:48px; border-radius:50%; border:none;
-    background:#34C759; cursor:pointer;
+    background:#40E0D0; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 4px 12px rgba(52,199,89,.45);
+    box-shadow:0 4px 12px rgba(64,224,208,.45);
   }
   .ev .play svg{display:block;}
   .ev .play:active{transform:scale(.92);}
@@ -140,7 +146,7 @@
   .row select{font-size:15px; padding:10px 8px; border:2px solid #eee; border-radius:14px; max-width:150px;}
   .emoPick{font-size:22px; width:52px; text-align:center; border:2px solid #eee; border-radius:14px; padding:6px 0; background:#fff;}
   .iconBtn{border:none; background:#f4f1f1; border-radius:12px; font-size:18px; padding:10px 12px; cursor:pointer;}
-  .iconBtn.playMini{background:#34C759; border-radius:50%; padding:0; width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center;}
+  .iconBtn.playMini{background:#40E0D0; border-radius:50%; padding:0; width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center;}
   .iconBtn.playMini svg{display:block;}
   .iconBtn.danger{background:#ffe3ea;}
   #addBtn{
@@ -162,7 +168,7 @@
 </style>
 </head>
 <body>
-<div id="cover"></div>
+<div id="cover"><div class="slide on" style="background-image:url('cover.jpg')"></div><div class="slide"></div></div>
 <div id="app">
 <button id="gearBtn" title="Налаштування">⚙️</button>
 <header>
@@ -182,7 +188,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 9 • 20.09.2026</div>
+<div class="ver">версія 10 • 20.09.2026</div>
 </div><!-- /app -->
 
 <div id="alarm">
@@ -207,7 +213,7 @@
 
 <script>
 "use strict";
-/* Modern green play icons (inline SVG — crisp on old iOS too) */
+/* Aquamarine play icons (inline SVG — crisp on old iOS too) */
 const PLAY_SVG='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M8 5v14l11-7z" fill="#fff"/></svg>';
 const PLAY_SVG_SM='<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M8 5v14l11-7z" fill="#fff"/></svg>';
 /* ---------- Data ---------- */
@@ -527,9 +533,31 @@ async function syncRemoteAlarms(){
   }catch(e){}
 }
 
+/* ---------- Photo slideshow (left panel, wide screens) ---------- */
+const PHOTOS = ["cover.jpg","photos/p1.jpg","photos/p2.jpg","photos/p3.jpg",
+                "photos/p4.jpg","photos/p5.jpg","photos/p6.jpg","photos/p7.jpg","photos/p8.jpg"];
+function startSlideshow(){
+  try{
+    const layers = document.querySelectorAll("#cover .slide");
+    if(!layers || layers.length < 2) return;
+    // preload so the old tablet doesn't flash on each switch
+    PHOTOS.forEach(p=>{ const im = new Image(); im.src = p; });
+    let idx = 0, turn = 0;
+    setInterval(()=>{
+      idx = (idx + 1) % PHOTOS.length;
+      const show = layers[turn % 2], hide = layers[(turn + 1) % 2];
+      show.style.backgroundImage = "url('" + PHOTOS[idx] + "')";
+      show.classList.add("on");
+      hide.classList.remove("on");
+      turn++;
+    }, 15000);
+  }catch(e){}
+}
+
 /* ---------- Boot ---------- */
 applyLinkAdd();
 tickClock(); renderList();
+startSlideshow();
 syncRemoteAlarms();
 setInterval(syncRemoteAlarms, 60000);
 setInterval(()=>{ tickClock(); checkAlarms(); }, 1000);
