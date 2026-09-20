@@ -154,6 +154,9 @@
   #photoGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
   .pth{position:relative;width:74px;height:74px;border-radius:12px;background:center/cover no-repeat #e8e0e0;flex:none;}
   .pthX{position:absolute;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;border:none;background:#ff5d8f;color:#fff;font-size:13px;line-height:1;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25);}
+  #slideToggle{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);width:54px;height:54px;border-radius:50%;border:1px solid rgba(255,255,255,.35);cursor:pointer;background:rgba(20,20,22,.45);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.25);z-index:3;}
+  #slideToggle svg{width:22px;height:22px;fill:#fff;display:block;}
+  #slideToggle:active{transform:translateX(-50%) scale(.93);}
   #addBtn{
     width:100%; border:2px dashed #d8cfcf; background:none; border-radius:16px;
     padding:14px; font-size:17px; font-weight:700; color:var(--muted); cursor:pointer; margin-top:6px;
@@ -173,7 +176,7 @@
 </style>
 </head>
 <body>
-<div id="cover"><div class="slide on" style="background-image:url('cover.jpg')"></div><div class="slide"></div></div>
+<div id="cover"><div class="slide on" style="background-image:url('cover.jpg')"></div><div class="slide"></div><button id="slideToggle" aria-label="Зупинити слайдшоу"></button></div>
 <div id="app">
 <button id="gearBtn" title="Налаштування">⚙️</button>
 <header>
@@ -193,7 +196,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 11 • 20.09.2026</div>
+<div class="ver">версія 12 • 20.09.2026</div>
 </div><!-- /app -->
 
 <div id="alarm">
@@ -580,6 +583,18 @@ function slideList(){
   customPhotos().forEach(c => { if(c && c.dataUrl) list.push(c.dataUrl); });
   return list.length ? list : ["cover.jpg"];
 }
+const PAUSE_KEY = "kidsRoutine.slidePaused.v1";
+const ICON_PAUSE = '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.6"/><rect x="14" y="5" width="4" height="14" rx="1.6"/></svg>';
+const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.53.85l10.2-6.5a1 1 0 0 0 0-1.7L9.53 4.65A1 1 0 0 0 8 5.5z"/></svg>';
+function slidePaused(){ try{ return localStorage.getItem(PAUSE_KEY) === "1"; }catch(e){ return false; } }
+function effectiveSec(){ const s = slideSec(); return (s > 0 && !slidePaused()) ? s : 0; }
+function renderSlideToggle(){
+  const b = $("slideToggle");
+  if(!b) return;
+  const running = effectiveSec() > 0;
+  b.innerHTML = running ? ICON_PAUSE : ICON_PLAY;
+  b.setAttribute("aria-label", running ? "Зупинити слайдшоу" : "Запустити слайдшоу");
+}
 let slideTimer = null;
 function startSlideshow(){
   try{
@@ -592,7 +607,7 @@ function startSlideshow(){
     layers[0].style.backgroundImage = "url('" + list[0] + "')";
     layers[0].classList.add("on");
     layers[1].classList.remove("on");
-    const sec = slideSec();
+    const sec = effectiveSec();
     if(sec > 0){
       slideTimer = setInterval(()=>{
         list = slideList();
@@ -605,6 +620,7 @@ function startSlideshow(){
         const nx = new Image(); nx.src = list[(idx + 1) % list.length];
       }, sec * 1000);
     }
+    renderSlideToggle();
   }catch(e){}
 }
 
@@ -669,6 +685,14 @@ startSlideshow();
 $("photoAdd").addEventListener("change", e=>{ handlePhotoFile(e.target.files[0]); e.target.value = ""; });
 $("slideInt").addEventListener("change", ()=>{ try{ localStorage.setItem(SINT_KEY, $("slideInt").value); }catch(e){} startSlideshow(); });
 $("photoReset").onclick = ()=>{ try{ localStorage.removeItem(HIDE_KEY); }catch(e){} renderPhotoMgr(); startSlideshow(); toast("↩️ Приховані фото повернуто"); };
+$("slideToggle").onclick = ()=>{
+  try{
+    if(slidePaused()){ localStorage.removeItem(PAUSE_KEY); }
+    else if(slideSec() === 0){ localStorage.setItem(SINT_KEY, "15"); }
+    else { localStorage.setItem(PAUSE_KEY, "1"); }
+  }catch(e){}
+  renderPhotoMgr(); startSlideshow();
+};
 syncRemoteAlarms();
 setInterval(syncRemoteAlarms, 60000);
 setInterval(()=>{ tickClock(); checkAlarms(); }, 1000);
