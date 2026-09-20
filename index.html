@@ -20,7 +20,7 @@
     margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     color:var(--ink);
     background:linear-gradient(160deg,var(--bg1),var(--bg2));
-    min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; align-items:center;
     padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
   }
   header{width:100%; max-width:560px; text-align:center; padding:18px 8px 6px;}
@@ -74,12 +74,13 @@
     cursor:pointer; color:#fff;
     box-shadow:0 6px 18px rgba(0,0,0,.18);
   }
+  .ver{text-align:center; color:var(--muted); font-size:12px; padding:70px 0 18px;}
   #settingsBtn{background:linear-gradient(135deg,#7b6cf0,#4cc9f0);}
   #wakeBtn{background:linear-gradient(135deg,var(--green),#7bd88f);}
   #wakeBtn.on{background:linear-gradient(135deg,#2ec4b6,#1d9e8f);}
   /* Overlay alarm */
   #alarm{
-    position:fixed; inset:0; z-index:50; display:none;
+    position:fixed; top:0; left:0; right:0; bottom:0; z-index:50; display:none;
     background:linear-gradient(160deg,#ff9f1c,#ff5d8f);
     flex-direction:column; align-items:center; justify-content:center; text-align:center;
     color:#fff; padding:24px;
@@ -99,16 +100,28 @@
   #alarmDone:active{transform:scale(.94);}
   /* Settings sheet */
   #sheet{
-    position:fixed; inset:0; z-index:60; display:none;
+    position:fixed; top:0; left:0; right:0; bottom:0; z-index:60; display:none;
     background:rgba(58,46,46,.45); align-items:flex-end; justify-content:center;
   }
   #sheet.show{display:flex;}
   #sheetCard{
-    background:#fff; width:100%; max-width:560px; max-height:88dvh; overflow:auto;
+    background:#fff; width:100%; max-width:560px;
+    max-height:88vh; max-height:88dvh; overflow:auto; -webkit-overflow-scrolling:touch;
     border-radius:28px 28px 0 0; padding:20px 18px calc(24px + env(safe-area-inset-bottom));
     animation:slideUp .3s ease;
   }
+  #sheetHead{
+    position:sticky; top:0; background:#fff; z-index:2;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:2px 0 10px; margin:-2px 0 0;
+  }
+  #sheetHead h2{margin:0; font-size:22px;}
+  #sheetX{
+    border:none; background:#f4f1f1; border-radius:50%; width:44px; height:44px;
+    font-size:22px; cursor:pointer; flex:none;
+  }
   @keyframes slideUp{from{transform:translateY(40px); opacity:0;} to{transform:none; opacity:1;}}
+  button{touch-action:manipulation; -webkit-tap-highlight-color:transparent;}
   #sheetCard h2{margin:0 0 12px; font-size:22px;}
   .row{display:flex; gap:8px; margin:8px 0; align-items:center;}
   .row input[type=text]{flex:1; font-size:16px; padding:10px 12px; border:2px solid #eee; border-radius:14px;}
@@ -157,6 +170,7 @@
   <button class="fab" id="wakeBtn">📱 Тримати екран</button>
   <button class="fab" id="settingsBtn">⚙️ Налаштування</button>
 </footer>
+<div class="ver">версія 4 • 20.09.2026</div>
 
 <div id="alarm">
   <div class="big" id="alarmEmo">☀️</div>
@@ -167,7 +181,7 @@
 
 <div id="sheet">
   <div id="sheetCard">
-    <h2>⚙️ Розклад дня</h2>
+    <div id="sheetHead"><h2>⚙️ Розклад дня</h2><button id="sheetX" aria-label="Закрити">✕</button></div>
     <div id="editor"></div>
     <button id="addBtn">＋ Додати подію</button>
     <div class="sheetActions">
@@ -425,6 +439,7 @@ $("saveBtn").onclick = ()=>{
   $("sheet").classList.remove("show");
 };
 $("closeBtn").onclick = ()=> $("sheet").classList.remove("show");
+$("sheetX").onclick = ()=> $("sheet").classList.remove("show");
 $("settingsBtn").onclick = openSheet;
 $("sheet").addEventListener("click", e=>{ if(e.target === $("sheet")) $("sheet").classList.remove("show"); });
 
