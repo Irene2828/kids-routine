@@ -76,6 +76,27 @@
   }
   #gearBtn:active{transform:scale(.93);}
   #gearBtn svg{display:block;}
+  /* v19: weather ticker — Apple glass, news-style, edge to edge */
+  #ticker{
+    position:absolute; top:0; left:0; right:0; z-index:4; overflow:hidden;
+    background:rgba(16,16,20,.38);
+    -webkit-backdrop-filter:blur(18px) saturate(1.5);
+    backdrop-filter:blur(18px) saturate(1.5);
+    border-bottom:1px solid rgba(255,255,255,.14);
+    box-shadow:0 1px 0 rgba(255,255,255,.06) inset;
+  }
+  #tickerInner{
+    display:inline-block; white-space:nowrap; padding:11px 0;
+    color:#fff; font-size:17px; font-weight:500; letter-spacing:.2px;
+    -webkit-animation:tickMove 38s linear infinite;
+    animation:tickMove 38s linear infinite;
+  }
+  #tickerInner b{font-weight:700;}
+  #tickerInner .tk{margin:0 30px;}
+  #tickerInner .tkDim{margin:0 30px; color:#a1a1a6;}
+  #tickerInner .tkDot{margin:0 4px; color:#48484a;}
+  @-webkit-keyframes tickMove{from{-webkit-transform:translateX(0);}to{-webkit-transform:translateX(-50%);}}
+  @keyframes tickMove{from{transform:translateX(0);}to{transform:translateX(-50%);}}
   #verChip{
     position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom) + 10px); z-index:3;
     font-size:11px; color:rgba(255,255,255,.55); text-shadow:0 1px 4px rgba(0,0,0,.5);
@@ -244,6 +265,7 @@
 <div id="stage">
   <img id="ph0" class="full on" src="cover.jpg" alt="">
   <img id="ph1" alt="">
+  <div id="ticker" style="display:none"><div id="tickerInner"></div></div>
   <div id="clockOverlay"><div id="clockTime">--:--:--</div><div id="clockDate"></div></div>
   <button id="slideToggle" aria-label="Зупинити слайдшоу"></button>
   <button id="gearBtn" title="Розклад"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M8.5 6.5h12M8.5 12h12M8.5 17.5h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="4.5" cy="6.5" r="1.7" fill="#fff"/><circle cx="4.5" cy="12" r="1.7" fill="#fff"/><circle cx="4.5" cy="17.5" r="1.7" fill="#fff"/></svg></button>
@@ -916,6 +938,44 @@ function handlePhotoFile(file){
   img.src = URL.createObjectURL(file);
 }
 
+/* ---------- Weather ticker (v19): Greenfield Park, morning/day/night ----------
+   News-style marquee on Apple glass. Live data from Open-Meteo (no key needed). */
+function wxIcon(c, night){
+  if(night && (c===0||c===1)) return "🌙";
+  if(c===0) return "☀️";
+  if(c===1||c===2) return "🌤️";
+  if(c===3) return "☁️";
+  if(c===45||c===48) return "🌫️";
+  if(c===95||c===96||c===99) return "⛈️";
+  if((c>=71&&c<=77)||c===85||c===86) return "❄️";
+  if((c>=51&&c<=67)||(c>=80&&c<=82)) return "🌧️";
+  return "🌤️";
+}
+function fmtT(t){ return (t>0?"+":"")+Math.round(t)+"°"; }
+function loadTicker(){
+  fetch("https://api.open-meteo.com/v1/forecast?latitude=45.48&longitude=-73.47&hourly=temperature_2m,weathercode&timezone=America%2FToronto&forecast_days=2")
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(!j || !j.hourly || !j.hourly.time) return;
+      const times=j.hourly.time, temps=j.hourly.temperature_2m, codes=j.hourly.weathercode;
+      const now=new Date();
+      const ds=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+      function at(h){
+        const i=times.indexOf(ds+"T"+String(h).padStart(2,"0")+":00");
+        return i>=0 ? {t:temps[i], c:codes[i]} : null;
+      }
+      const mo=at(8), da=at(14), ni=at(22);
+      if(!mo || !da || !ni) return;
+      const seg='<span class="tk">'+wxIcon(mo.c,false)+' Вранці <b>'+fmtT(mo.t)+'</b></span>'+
+                '<span class="tk">'+wxIcon(da.c,false)+' Вдень <b>'+fmtT(da.t)+'</b></span>'+
+                '<span class="tk">'+wxIcon(ni.c,true)+' Вночі <b>'+fmtT(ni.t)+'</b></span>'+
+                '<span class="tkDim">Грінфілд Парк</span><span class="tkDot">•</span>';
+      $("tickerInner").innerHTML=seg+seg+seg+seg+seg+seg;
+      $("ticker").style.display="block";
+    })
+    .catch(function(){ /* offline: ticker stays hidden */ });
+}
+
 /* ---------- Boot ---------- */
 applyLinkAdd();
 tickClock(); renderList();
@@ -933,6 +993,8 @@ $("slideToggle").onclick = ()=>{
 };
 syncRemoteAlarms();
 setInterval(syncRemoteAlarms, 60000);
+loadTicker();
+setInterval(loadTicker, 30*60*1000);
 setInterval(()=>{ tickClock(); checkAlarms(); }, 1000);
 setInterval(renderStageClock, 1000);
 renderStageClock();
