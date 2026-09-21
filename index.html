@@ -196,6 +196,13 @@
   #tabPhotoBody{flex:1; overflow:auto; -webkit-overflow-scrolling:touch; padding:14px 16px; min-height:0;}
   #schedList{flex:1; overflow:auto; -webkit-overflow-scrolling:touch; min-height:0;}
   .srow{border-bottom:1px solid rgba(255,255,255,.1); padding:12px 16px;}
+  /* v19: swipe-to-delete, як в Apple Clock */
+  .swipe{position:relative; overflow:hidden;}
+  .swipe .srow{position:relative; z-index:1; background:#101014;
+    transition:transform .28s ease; -webkit-transition:-webkit-transform .28s ease;}
+  .swdel{position:absolute; top:0; right:0; bottom:0; width:92px; border:none;
+    background:#ff3b30; color:#fff; font-size:16px; font-weight:600;}
+  .swdel:active{background:#e0342b;}
   .stop{display:flex; align-items:center; gap:12px;}
   .semo{font-size:30px; width:40px; text-align:center; flex:none; cursor:pointer;}
   .smain{flex:1; min-width:0;}
@@ -599,6 +606,66 @@ function inlineTimeEdit(el, ev){
     if(e.key === "Escape"){ done = true; renderSched(); }
   });
 }
+function removeAlarm(ev){
+  if(ev.id) rememberDismissed(ev.id);
+  events.splice(events.indexOf(ev), 1);
+  if(schedOpenId === ev.id) schedOpenId = null;
+  swipeOpen = null;
+  save(); renderSched(); renderList();
+}
+/* ---------- Swipe-to-delete, як в Apple Clock ---------- */
+var swipeOpen = null, suppressClick = false;
+var SW_W = 92;
+function closeSwipe(){
+  if(swipeOpen){ swipeOpen.style.transform = ""; swipeOpen = null; }
+}
+function attachSwipe(row){
+  var sx=0, sy=0, base=0, dx=0, active=false;
+  row.addEventListener("touchstart", function(e){
+    var t = e.touches[0];
+    sx = t.clientX; sy = t.clientY; dx = 0; active = true;
+    base = (swipeOpen === row) ? -SW_W : 0;
+    if(swipeOpen && swipeOpen !== row) closeSwipe();
+    row.style.transition = "none"; row.style.webkitTransition = "none";
+  }, {passive:true});
+  row.addEventListener("touchmove", function(e){
+    if(!active) return;
+    var t = e.touches[0];
+    dx = t.clientX - sx;
+    var dy = t.clientY - sy;
+    if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8){
+      e.preventDefault();
+      var nx = base + dx;
+      if(nx > 0) nx = 0;
+      if(nx < -SW_W) nx = -SW_W;
+      row.style.transform = "translateX("+nx+"px)";
+      row.style.webkitTransform = "translateX("+nx+"px)";
+    }
+  }, {passive:false});
+  function end(){
+    if(!active) return; active = false;
+    row.style.transition = ""; row.style.webkitTransition = "";
+    if(base !== 0 && Math.abs(dx) < 10){
+      closeSwipe(); suppressClick = true;   // тап по відкритому рядку — просто закрити
+      setTimeout(function(){ suppressClick = false; }, 300);
+      return;
+    }
+    if(base + dx < -SW_W/2){
+      row.style.transform = "translateX("+(-SW_W)+"px)";
+      row.style.webkitTransform = "translateX("+(-SW_W)+"px)";
+      swipeOpen = row;
+    } else {
+      row.style.transform = ""; row.style.webkitTransform = "";
+      if(swipeOpen === row) swipeOpen = null;
+    }
+  }
+  row.addEventListener("touchend", end, {passive:true});
+  row.addEventListener("touchcancel", function(){
+    active = false; row.style.transition = ""; row.style.webkitTransition = "";
+    var t = (swipeOpen === row) ? "translateX("+(-SW_W)+"px)" : "";
+    row.style.transform = t; row.style.webkitTransform = t;
+  }, {passive:true});
+}
 function renderSched(){
   const list = $("schedList"); if(!list) return;
   list.innerHTML = "";
@@ -663,13 +730,15 @@ function renderSched(){
       r.onload = ()=>{ ev.customSound = r.result; ev.sound = "custom"; save(); renderSched(); };
       r.readAsDataURL(file);
     };
-    q(".sdel").onclick = ()=>{
-      if(ev.id) rememberDismissed(ev.id);
-      events.splice(events.indexOf(ev), 1);
-      if(schedOpenId === ev.id) schedOpenId = null;
-      save(); renderSched(); renderList();
-    };
-    list.appendChild(row);
+    q(".sdel").onclick = ()=> removeAlarm(ev);
+    const wrap = document.createElement("div");
+    wrap.className = "swipe";
+    const swdel = document.createElement("button");
+    swdel.className = "swdel"; swdel.textContent = "Видалити";
+    swdel.onclick = ()=> removeAlarm(ev);
+    wrap.appendChild(row); wrap.appendChild(swdel);
+    attachSwipe(row);
+    list.appendChild(wrap);
   });
 }
 $("addAlarmBtn").onclick = ()=>{
@@ -995,6 +1064,10 @@ syncRemoteAlarms();
 setInterval(syncRemoteAlarms, 60000);
 loadTicker();
 setInterval(loadTicker, 30*60*1000);
+/* тап по відкритому свайпом рядку лише закриває його, не запускає редагування */
+$("schedList").addEventListener("click", function(e){
+  if(suppressClick){ e.stopPropagation(); e.preventDefault(); suppressClick = false; }
+}, true);
 setInterval(()=>{ tickClock(); checkAlarms(); }, 1000);
 setInterval(renderStageClock, 1000);
 renderStageClock();
