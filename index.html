@@ -211,8 +211,14 @@
   .srep{font-size:13px; color:#a1a1a6; margin-top:2px; cursor:pointer;}
   .sedit{font-size:17px; font-weight:600; width:100%; border:none; border-bottom:2px solid #fff; padding:2px 0; outline:none; background:transparent; color:#fff;}
   .seditTime{font-size:34px; font-weight:600; border:none; border-bottom:2px solid #fff; outline:none; background:transparent; color:#fff; font-variant-numeric:tabular-nums; width:130px;}
-  .sdays{display:flex; gap:8px; margin:10px 0 2px;}
-  .sdays .chip{flex:none;}
+  /* v19: дні як в Apple — статус + дропдаун зі списком */
+  .daylist{margin:8px 0 4px; border-top:1px solid rgba(255,255,255,.12);
+    max-height:330px; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .dayrow{display:flex; width:100%; align-items:center; justify-content:space-between;
+    background:none; border:none; border-bottom:1px solid rgba(255,255,255,.12);
+    color:#fff; font-size:17px; padding:12px 4px; cursor:pointer; text-align:left;}
+  .dayrow .tick{font-size:18px; font-weight:700; opacity:0;}
+  .dayrow.on .tick{opacity:1;}
   .sswitch{
     flex:none; width:51px; height:31px; border-radius:999px; border:none; cursor:pointer;
     background:rgba(255,255,255,.18); position:relative; transition:background .2s; padding:0;
@@ -592,10 +598,13 @@ function inlineTextEdit(el, value, commit){
     else if(e.key === "Escape"){ done = true; renderSched(); }
   });
 }
-function soundLabel(ev){
-  if(ev.customSound) return "🎵 Свій звук";
-  const s = SOUNDS[ev.sound];
-  return s ? s.label : "🔔 Звук";
+function dayListHTML(ev){
+  const days = eventDays(ev);
+  const labels = [["Понеділок",1],["Вівторок",2],["Середа",3],["Четвер",4],["Пʼятниця",5],["Субота",6],["Неділя",0]];
+  return labels.map(function(ld){
+    return '<button class="dayrow'+(days.indexOf(ld[1])>=0?" on":"")+'" data-day="'+ld[1]+'">'+
+      '<span>'+ld[0]+'</span><span class="tick">✓</span></button>';
+  }).join("");
 }
 /* Час вводиться руками, як назва: цифри + автодвокрапка */
 function inlineTimeEdit(el, ev){
@@ -708,12 +717,12 @@ function renderSched(){
         '<div class="smain">'+
           '<div class="stime" title="Торкнись, щоб змінити час">'+escapeHtml(ev.time)+'</div>'+
           '<div class="sname" title="Торкнись, щоб змінити назву">'+escapeHtml(ev.name||"Будильник")+'</div>'+
-          '<div class="srep" title="Звук">'+escapeHtml(soundLabel(ev))+' ›</div>'+
+          '<div class="srep" title="Повторення">'+escapeHtml(daysLabel(ev))+' ›</div>'+
         '</div>'+
         '<button class="sswitch'+(isEnabled(ev)?" on":"")+'" aria-label="Увімкнути або вимкнути"><span></span></button>'+
       '</div>'+
-      '<div class="sdays">'+dayChipsHTML(ev)+'</div>'+
       '<div class="sexp" style="display:'+(open?"block":"none")+'">'+
+        '<div class="daylist">'+dayListHTML(ev)+'</div>'+
         '<div class="soundRow">'+
           '<label>Звук:</label>'+
           '<select class="ssound">'+soundOptsHTML(ev)+'</select>'+
@@ -738,9 +747,9 @@ function renderSched(){
       save(); renderSched(); renderList();
     };
     q(".srep").onclick = ()=>{ schedOpenId = open ? null : ev.id; renderSched(); };
-    row.querySelectorAll(".chip").forEach(ch=>{
-      ch.onclick = ()=>{
-        const d = +ch.dataset.day;
+    row.querySelectorAll(".dayrow").forEach(function(dr){
+      dr.onclick = ()=>{
+        const d = +dr.dataset.day;
         const days = eventDays(ev).slice();
         const i = days.indexOf(d);
         if(i >= 0){ if(days.length > 1) days.splice(i,1); }
