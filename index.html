@@ -69,7 +69,7 @@
     position:absolute; top:calc(env(safe-area-inset-top) + 66px); right:14px; z-index:10;
     width:46px; height:46px; border:none; border-radius:50%; cursor:pointer;
     background:rgba(20,20,22,.45); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
-    font-size:24px; line-height:1; color:#fff;
+    font-size:24px; line-height:46px; color:#fff; text-align:center; padding:0;
     display:flex; align-items:center; justify-content:center;
     box-shadow:0 4px 16px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
     -webkit-tap-highlight-color:transparent;
@@ -181,7 +181,7 @@
     padding:calc(env(safe-area-inset-top) + 10px) 12px 10px;
     border-bottom:1px solid rgba(255,255,255,.12);
   }
-  .seg{flex:1; display:flex; background:rgba(255,255,255,.08); border-radius:12px; padding:3px;}
+  .seg{flex:1 1 auto; min-width:0; max-width:300px; display:flex; background:rgba(255,255,255,.08); border-radius:12px; padding:3px;}
   .seg button{
     flex:1; border:none; background:transparent; border-radius:9px;
     padding:8px 0; font-size:15px; font-weight:600; color:#9a9aa0; cursor:pointer;
@@ -189,7 +189,8 @@
   .seg button.on{background:#fff; color:#000; box-shadow:0 1px 4px rgba(0,0,0,.35);}
   #panelX{
     border:none; background:rgba(255,255,255,.1); color:#fff; border-radius:50%;
-    width:38px; height:38px; font-size:18px; cursor:pointer; flex:none;
+    width:38px; height:38px; font-size:18px; line-height:38px; padding:0; text-align:center;
+    cursor:pointer; flex:none; margin-left:auto;
   }
   #tabSchedBody{flex:1; display:flex; flex-direction:column; min-height:0;}
   #tabPhotoBody{flex:1; overflow:auto; -webkit-overflow-scrolling:touch; padding:14px 16px; min-height:0;}
@@ -224,7 +225,7 @@
     border:none; background:none; color:#a1a1a6; font-size:15px; font-weight:600;
     padding:10px 0 2px; cursor:pointer;
   }
-  #addWrap{flex:none; padding:10px 16px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid rgba(255,255,255,.12); background:#101014; text-align:center;}
+  #addWrap{flex:none; padding:10px 16px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid rgba(255,255,255,.12); background:#101014; text-align:right;}
   #addAlarmBtn{
     width:58px; height:58px; border-radius:50%; border:none; cursor:pointer;
     background:#fff; color:#000; font-size:34px; line-height:1; padding:0 0 4px;
@@ -268,7 +269,7 @@
   <div id="ticker" style="display:none"><div id="tickerInner"></div></div>
   <div id="clockOverlay"><div id="clockTime">--:--:--</div><div id="clockDate"></div></div>
   <button id="slideToggle" aria-label="Зупинити слайдшоу"></button>
-  <button id="gearBtn" title="Розклад"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M8.5 6.5h12M8.5 12h12M8.5 17.5h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="4.5" cy="6.5" r="1.7" fill="#fff"/><circle cx="4.5" cy="12" r="1.7" fill="#fff"/><circle cx="4.5" cy="17.5" r="1.7" fill="#fff"/></svg></button>
+  <button id="gearBtn" title="Розклад">☰</button>
   <div id="verChip">версія 19 • 21.09.2026</div>
 </div>
 <div id="app">
@@ -311,7 +312,6 @@
     <div id="schedList"></div>
     <div id="addWrap">
       <button id="addAlarmBtn" title="Додати будильник">+</button>
-      <p class="phint">💡 Порада: щоб звук лунав вчасно, тримай цю сторінку відкритою і вимкни автоблокування екрана (Параметри → Екран і яскравість → Автоблокування → Ніколи). На заблокованому телефоні браузер не може будити звуком (обмеження iOS).</p>
     </div>
   </div>
   <div id="tabPhotoBody" style="display:none">
