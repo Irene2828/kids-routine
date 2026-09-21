@@ -25,32 +25,37 @@
     min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; align-items:center;
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   }
-  #app{width:100%; display:flex; flex-direction:column; align-items:center; padding:0 16px; position:relative;}
+  #app{display:none;}
+  /* v16: photo stage — permanent fullscreen background while waiting for an alarm */
+  #stage{
+    position:fixed; top:0; left:0; right:0; bottom:0; z-index:0; overflow:hidden;
+    background-color:#262033; /* fallback for browsers without oklch (old iPad) */
+    background-image:radial-gradient(130% 130% at 50% 12%, oklch(0.46 0.085 300), oklch(0.24 0.05 276));
+  }
+  #stage img{
+    position:absolute; top:0; left:0; right:0; bottom:0; margin:auto;
+    opacity:0; transition:opacity 1.4s ease; pointer-events:none;
+  }
+  #stage img.on{opacity:1;}
+  #stage img.full{width:100%; height:100%; object-fit:cover;}
+  #stage img.fit{
+    width:auto; height:auto; max-width:94vw; max-height:94vh; max-height:94dvh;
+    object-fit:contain; border-radius:20px; box-shadow:0 20px 70px rgba(0,0,0,.5);
+  }
   #gearBtn{
-    position:absolute; top:calc(env(safe-area-inset-top) + 12px); right:14px; z-index:5;
-    width:46px; height:46px; border:none; background:transparent; cursor:pointer;
-    font-size:27px; line-height:1; color:#8e8e93;
+    position:absolute; top:calc(env(safe-area-inset-top) + 12px); right:14px; z-index:3;
+    width:46px; height:46px; border:none; border-radius:50%; cursor:pointer;
+    background:rgba(20,20,22,.45); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+    font-size:24px; line-height:1; color:#fff;
     display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 16px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
     -webkit-tap-highlight-color:transparent;
   }
-  #gearBtn:active{opacity:.6;}
-  #cover{display:none;}
-  /* Wide screens (tablet landscape): photo on the left, app content on the right */
-  @media (min-width:900px){
-    body{flex-direction:row; align-items:flex-start; justify-content:flex-start;}
-    #cover{
-      display:block; flex:none; width:40%;
-      position:-webkit-sticky; position:sticky; top:0;
-      height:100vh; height:100dvh; min-height:100vh;
-      overflow:hidden; background:#ffe8f0;
-    }
-    #cover .slide{
-      position:absolute; top:0; left:0; right:0; bottom:0;
-      background:center/cover no-repeat;
-      opacity:0; transition:opacity 1.4s ease;
-    }
-    #cover .slide.on{opacity:1;}
-    #app{flex:1; min-width:0; padding:0 20px;}
+  #gearBtn:active{transform:scale(.93);}
+  #verChip{
+    position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom) + 10px); z-index:3;
+    font-size:11px; color:rgba(255,255,255,.55); text-shadow:0 1px 4px rgba(0,0,0,.5);
+    pointer-events:none;
   }
   header{width:100%; max-width:560px; text-align:center; padding:18px 8px 6px;}
   header h1{margin:0; font-size:30px; letter-spacing:.5px;}
@@ -178,9 +183,14 @@
 </style>
 </head>
 <body>
-<div id="cover"><div class="slide on" style="background-image:url('cover.jpg')"></div><div class="slide"></div><button id="slideToggle" aria-label="Зупинити слайдшоу"></button></div>
+<div id="stage">
+  <img id="ph0" class="full on" src="cover.jpg" alt="">
+  <img id="ph1" alt="">
+  <button id="slideToggle" aria-label="Зупинити слайдшоу"></button>
+  <button id="gearBtn" title="Налаштування">⚙️</button>
+  <div id="verChip">версія 16 • 21.09.2026</div>
+</div>
 <div id="app">
-<button id="gearBtn" title="Налаштування">⚙️</button>
 <header>
   <h1>☀️ Режим дня</h1>
   <div id="clock">--:--</div>
@@ -198,7 +208,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 15 • 21.09.2026</div>
+<div class="ver">версія 16 • 21.09.2026</div>
 </div><!-- /app -->
 
 <div id="alarm">
@@ -643,16 +653,30 @@ function renderSlideToggle(){
   b.innerHTML = running ? ICON_PAUSE : ICON_PLAY;
   b.setAttribute("aria-label", running ? "Зупинити слайдшоу" : "Запустити слайдшоу");
 }
+/* ---------- Photo stage (v16): fullscreen permanent background while waiting ----------
+   The autumn cover (cover.jpg) fills the whole screen; every other photo is
+   centered (contain) over an oklch background. Crossfading <img> layers. */
+function isAutumnCover(src){ return src === "cover.jpg"; }
+function fitPhoto(img, src){
+  img.classList.toggle("full", isAutumnCover(src));
+  img.classList.toggle("fit", !isAutumnCover(src));
+}
 let slideTimer = null;
 function startSlideshow(){
   try{
-    const layers = document.querySelectorAll("#cover .slide");
-    if(!layers || layers.length < 2) return;
+    const layers = [document.getElementById("ph0"), document.getElementById("ph1")];
+    if(!layers[0] || !layers[1]) return;
     if(slideTimer){ clearInterval(slideTimer); slideTimer = null; }
     let list = slideList(), idx = 0, turn = 0;
     // preload so the old tablet doesn't flash on each switch
     list.forEach(p => { const im = new Image(); im.src = p; });
-    layers[0].style.backgroundImage = "url('" + list[0] + "')";
+    const first = list[0];
+    if(layers[0].getAttribute("src") !== first){
+      fitPhoto(layers[0], first);
+      layers[0].src = first;
+    } else {
+      fitPhoto(layers[0], first);
+    }
     layers[0].classList.add("on");
     layers[1].classList.remove("on");
     const sec = effectiveSec();
@@ -661,9 +685,13 @@ function startSlideshow(){
         list = slideList();
         idx = (idx + 1) % list.length;
         const show = layers[turn % 2], hide = layers[(turn + 1) % 2];
-        show.style.backgroundImage = "url('" + list[idx] + "')";
-        show.classList.add("on");
-        hide.classList.remove("on");
+        const src = list[idx];
+        fitPhoto(show, src);
+        // crossfade: new photo fades in over the old one, old hides after
+        const swap = ()=>{ show.classList.add("on"); hide.classList.remove("on"); };
+        show.onload = swap;
+        show.src = src;
+        if(show.complete && show.naturalWidth) swap();
         turn++;
         const nx = new Image(); nx.src = list[(idx + 1) % list.length];
       }, sec * 1000);
