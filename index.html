@@ -210,7 +210,9 @@
   .sname{font-size:17px; font-weight:600; margin-top:2px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff;}
   .srep{font-size:13px; color:#a1a1a6; margin-top:2px; cursor:pointer;}
   .sedit{font-size:17px; font-weight:600; width:100%; border:none; border-bottom:2px solid #fff; padding:2px 0; outline:none; background:transparent; color:#fff;}
-  .seditTime{font-size:30px; font-weight:600; border:none; border-bottom:2px solid #fff; outline:none; background:transparent; color:#fff; font-variant-numeric:tabular-nums;}
+  .seditTime{font-size:34px; font-weight:600; border:none; border-bottom:2px solid #fff; outline:none; background:transparent; color:#fff; font-variant-numeric:tabular-nums; width:130px;}
+  .sdays{display:flex; gap:8px; margin:10px 0 2px;}
+  .sdays .chip{flex:none;}
   .sswitch{
     flex:none; width:51px; height:31px; border-radius:999px; border:none; cursor:pointer;
     background:rgba(255,255,255,.18); position:relative; transition:background .2s; padding:0;
@@ -590,19 +592,46 @@ function inlineTextEdit(el, value, commit){
     else if(e.key === "Escape"){ done = true; renderSched(); }
   });
 }
+function soundLabel(ev){
+  if(ev.customSound) return "🎵 Свій звук";
+  const s = SOUNDS[ev.sound];
+  return s ? s.label : "🔔 Звук";
+}
+/* Час вводиться руками, як назва: цифри + автодвокрапка */
 function inlineTimeEdit(el, ev){
   const input = document.createElement("input");
-  input.type = "time"; input.value = ev.time || "08:00"; input.className = "seditTime";
+  input.type = "text"; input.inputMode = "numeric";
+  input.value = ev.time || "08:00"; input.className = "seditTime";
+  input.setAttribute("placeholder", "08:30");
+  input.setAttribute("maxlength", "5");
+  input.setAttribute("autocapitalize", "off"); input.setAttribute("autocorrect", "off");
   el.replaceWith(input);
-  input.focus();
+  input.focus(); input.select();
   let done = false;
-  input.addEventListener("change", ()=> input.blur());
-  input.addEventListener("blur", ()=>{
+  function finish(commit){
     if(done) return; done = true;
-    if(/^\d{2}:\d{2}$/.test(input.value)) ev.time = input.value;
+    if(commit){
+      const d = input.value.replace(/[^\d]/g, "");
+      let v = d;
+      if(v.length === 3) v = "0" + v;
+      if(v.length === 4){
+        let hh = +v.slice(0,2), mm = +v.slice(2);
+        if(hh > 23) hh = 23; if(mm > 59) mm = 59;
+        ev.time = String(hh).padStart(2,"0") + ":" + String(mm).padStart(2,"0");
+      } else if(/^\d{2}:\d{2}$/.test(input.value)){
+        ev.time = input.value;
+      }
+    }
     save(); renderSched(); renderList();
+  }
+  input.addEventListener("input", ()=>{
+    const d = input.value.replace(/[^\d]/g, "").slice(0,4);
+    input.value = d.length > 2 ? d.slice(0,2) + ":" + d.slice(2) : d;
   });
+  input.addEventListener("change", ()=> input.blur());
+  input.addEventListener("blur", ()=> finish(true));
   input.addEventListener("keydown", e=>{
+    if(e.key === "Enter") input.blur();
     if(e.key === "Escape"){ done = true; renderSched(); }
   });
 }
@@ -677,14 +706,14 @@ function renderSched(){
       '<div class="stop">'+
         '<div class="semo" title="Змінити іконку">'+escapeHtml(ev.emoji||"⏰")+'</div>'+
         '<div class="smain">'+
-          '<div class="stime" title="Змінити час">'+escapeHtml(ev.time)+'</div>'+
-          '<div class="sname" title="Змінити назву">'+escapeHtml(ev.name||"Будильник")+'</div>'+
-          '<div class="srep" title="Повторення">'+escapeHtml(daysLabel(ev))+' ›</div>'+
+          '<div class="stime" title="Торкнись, щоб змінити час">'+escapeHtml(ev.time)+'</div>'+
+          '<div class="sname" title="Торкнись, щоб змінити назву">'+escapeHtml(ev.name||"Будильник")+'</div>'+
+          '<div class="srep" title="Звук">'+escapeHtml(soundLabel(ev))+' ›</div>'+
         '</div>'+
         '<button class="sswitch'+(isEnabled(ev)?" on":"")+'" aria-label="Увімкнути або вимкнути"><span></span></button>'+
       '</div>'+
+      '<div class="sdays">'+dayChipsHTML(ev)+'</div>'+
       '<div class="sexp" style="display:'+(open?"block":"none")+'">'+
-        '<div class="chips">'+dayChipsHTML(ev)+'</div>'+
         '<div class="soundRow">'+
           '<label>Звук:</label>'+
           '<select class="ssound">'+soundOptsHTML(ev)+'</select>'+
