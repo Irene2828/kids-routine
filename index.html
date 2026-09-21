@@ -42,6 +42,23 @@
     width:auto; height:auto; max-width:94vw; max-height:94vh; max-height:94dvh;
     object-fit:contain; border-radius:20px; box-shadow:0 20px 70px rgba(0,0,0,.5);
   }
+  /* v17: live waiting-mode clock on the autumn cover (Tahoe style) */
+  #clockOverlay{
+    position:absolute; inset:0; z-index:2; pointer-events:none;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    opacity:0; transition:opacity .8s ease;
+  }
+  #clockOverlay.show{opacity:1;}
+  #clockTime{
+    color:#fff; font-weight:200; font-variant-numeric:tabular-nums;
+    font-size:min(22vmin,180px); letter-spacing:-.02em; line-height:1;
+    text-shadow:0 2px 40px rgba(0,0,0,.45), 0 1px 8px rgba(0,0,0,.4);
+  }
+  #clockDate{
+    margin-top:1.4vmin; color:rgba(255,255,255,.92);
+    font-size:min(4.5vmin,34px); font-weight:400; letter-spacing:.01em;
+    text-shadow:0 1px 12px rgba(0,0,0,.5);
+  }
   #gearBtn{
     position:absolute; top:calc(env(safe-area-inset-top) + 12px); right:14px; z-index:3;
     width:46px; height:46px; border:none; border-radius:50%; cursor:pointer;
@@ -186,9 +203,10 @@
 <div id="stage">
   <img id="ph0" class="full on" src="cover.jpg" alt="">
   <img id="ph1" alt="">
+  <div id="clockOverlay"><div id="clockTime">--:--:--</div><div id="clockDate"></div></div>
   <button id="slideToggle" aria-label="Зупинити слайдшоу"></button>
   <button id="gearBtn" title="Налаштування">⚙️</button>
-  <div id="verChip">версія 16 • 21.09.2026</div>
+  <div id="verChip">версія 17 • 21.09.2026</div>
 </div>
 <div id="app">
 <header>
@@ -208,7 +226,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 16 • 21.09.2026</div>
+<div class="ver">версія 17 • 21.09.2026</div>
 </div><!-- /app -->
 
 <div id="alarm">
@@ -433,6 +451,7 @@ function fireAlarm(ev){
   $("alarmEmo").textContent = ev.emoji || "⏰";
   $("alarmName").textContent = ev.name + "!";
   $("alarm").classList.add("show");
+  renderStageClock();
   renderList();
   // play sound in a loop until dismissed (max ~90s)
   let plays = 0;
@@ -444,6 +463,7 @@ function dismissAlarm(){
   currentAlarm = null;
   if(alarmTimer){ clearTimeout(alarmTimer); alarmTimer = null; }
   $("alarm").classList.remove("show");
+  renderStageClock();
   renderList();
 }
 $("alarmDone").onclick = dismissAlarm;
@@ -652,6 +672,26 @@ function renderSlideToggle(){
   const running = effectiveSec() > 0;
   b.innerHTML = running ? ICON_PAUSE : ICON_PLAY;
   b.setAttribute("aria-label", running ? "Зупинити слайдшоу" : "Запустити слайдшоу");
+  renderStageClock();
+}
+/* ---------- Waiting-mode live clock (v17) ----------
+   White Tahoe-style clock over the autumn cover, shown only when the
+   slideshow is paused and no alarm is ringing. */
+function stageClockVisible(){
+  const alarmOn = $("alarm") && $("alarm").classList.contains("show");
+  return !alarmOn && effectiveSec() === 0;
+}
+function renderStageClock(){
+  const el = $("clockOverlay"); if(!el) return;
+  const vis = stageClockVisible();
+  el.classList.toggle("show", vis);
+  if(!vis) return;
+  const d = new Date();
+  const p = n => String(n).padStart(2, "0");
+  $("clockTime").textContent = p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+  const days = ["неділя","понеділок","вівторок","середа","четвер","п'ятниця","субота"];
+  const mon = ["січня","лютого","березня","квітня","травня","червня","липня","серпня","вересня","жовтня","листопада","грудня"];
+  $("clockDate").textContent = days[d.getDay()] + ", " + d.getDate() + " " + mon[d.getMonth()];
 }
 /* ---------- Photo stage (v16): fullscreen permanent background while waiting ----------
    The autumn cover (cover.jpg) fills the whole screen; every other photo is
@@ -772,6 +812,8 @@ $("slideToggle").onclick = ()=>{
 syncRemoteAlarms();
 setInterval(syncRemoteAlarms, 60000);
 setInterval(()=>{ tickClock(); checkAlarms(); }, 1000);
+setInterval(renderStageClock, 1000);
+renderStageClock();
 setInterval(renderList, 30000);
 </script>
 </body>
