@@ -44,19 +44,20 @@
   }
   /* v17: live waiting-mode clock on the autumn cover (Tahoe style) */
   #clockOverlay{
-    position:absolute; inset:0; z-index:2; pointer-events:none;
+    position:absolute; top:0; left:0; right:0; bottom:0; z-index:2; pointer-events:none;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:radial-gradient(62% 46% at 50% 50%, rgba(10,8,18,.42), rgba(10,8,18,0) 72%);
     opacity:0; transition:opacity .8s ease;
   }
   #clockOverlay.show{opacity:1;}
   #clockTime{
     color:#fff; font-weight:200; font-variant-numeric:tabular-nums;
-    font-size:min(22vmin,180px); letter-spacing:-.02em; line-height:1;
+    font-size:22vmin; letter-spacing:-.02em; line-height:1;
     text-shadow:0 2px 40px rgba(0,0,0,.45), 0 1px 8px rgba(0,0,0,.4);
   }
   #clockDate{
     margin-top:1.4vmin; color:rgba(255,255,255,.92);
-    font-size:min(4.5vmin,34px); font-weight:400; letter-spacing:.01em;
+    font-size:4.5vmin; font-weight:400; letter-spacing:.01em;
     text-shadow:0 1px 12px rgba(0,0,0,.5);
   }
   #gearBtn{
@@ -206,7 +207,7 @@
   <div id="clockOverlay"><div id="clockTime">--:--:--</div><div id="clockDate"></div></div>
   <button id="slideToggle" aria-label="Зупинити слайдшоу"></button>
   <button id="gearBtn" title="Налаштування">⚙️</button>
-  <div id="verChip">версія 17 • 21.09.2026</div>
+  <div id="verChip">версія 18 • 21.09.2026</div>
 </div>
 <div id="app">
 <header>
@@ -226,7 +227,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 17 • 21.09.2026</div>
+<div class="ver">версія 18 • 21.09.2026</div>
 </div><!-- /app -->
 
 <div id="alarm">
