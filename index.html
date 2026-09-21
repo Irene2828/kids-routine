@@ -86,6 +86,8 @@
   .ev.now{border-color:var(--accent); box-shadow:0 6px 20px rgba(255,159,28,.35);}
   .ev.now .badge{background:#fff3df; color:#d97e06;}
   .ev.next .badge{background:#e7f6fd; color:#1b9ad6;}
+  .ev.off{opacity:.45;}
+  .ev.off .badge{background:#f0ecec; color:#9a8c8c;}
   .ev .play{
     flex:none; width:48px; height:48px; border-radius:50%; border:none;
     background:#40E0D0; cursor:pointer;
@@ -196,7 +198,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 14 • 20.09.2026</div>
+<div class="ver">версія 15 • 21.09.2026</div>
 </div><!-- /app -->
 
 <div id="alarm">
@@ -349,21 +351,40 @@ function tickClock(){
   $("dateLine").textContent = days[d.getDay()]+", "+d.getDate()+" "+mon[d.getMonth()];
 }
 function sortedEvents(){ return [...events].sort((a,b)=> a.time < b.time ? -1 : 1); }
+/* ---------- Day-of-week repeats (from alarms.json) ---------- */
+// days: JS getDay() numbers, 0=Sunday. Absent or empty = every day.
+function eventDays(ev){
+  if(ev && Array.isArray(ev.days) && ev.days.length) return ev.days;
+  return [0,1,2,3,4,5,6];
+}
+function isToday(ev){ return eventDays(ev).indexOf(new Date().getDay()) >= 0; }
+function isEnabled(ev){ return !ev || ev.enabled !== false; }
+function daysLabel(ev){
+  const d = eventDays(ev).slice().sort();
+  const same = function(arr){ return d.length===arr.length && d.every(function(x,i){ return x===arr[i]; }); };
+  if(same([0,1,2,3,4,5,6])) return "щодня";
+  if(same([1,2,3,4,5])) return "щобудня";
+  if(same([0,6])) return "щовихідних";
+  const names = ["щонеділі","щопонеділка","щовівторка","щосереди","щочетверга","щопʼятниці","щосуботи"];
+  if(d.length === 1) return names[d[0]];
+  return "щодня";
+}
 function renderList(){
   const hm = nowHM(), list = $("list"); list.innerHTML = "";
   const se = sortedEvents();
   let nextEv = null;
   se.forEach(ev=>{
-    const done = ev.time <= hm && !ringing.has(ev.id+todayKey());
-    const isNext = !done && !nextEv;
+    const active = isEnabled(ev) && isToday(ev);
+    const done = active && ev.time <= hm && !ringing.has(ev.id+todayKey());
+    const isNext = active && !done && !nextEv;
     if(isNext) nextEv = ev;
     const div = document.createElement("div");
-    div.className = "ev"+(done?" done":"")+(isNext?" next":"");
-    const badge = done ? "✅" : (isNext ? "Далі" : "⏳");
+    div.className = "ev"+(done?" done":"")+(!active?" off":"")+(isNext?" next":"");
+    const badge = !active ? daysLabel(ev) : (done ? "✅" : (isNext ? "Далі" : "⏳"));
     div.innerHTML =
       '<div class="emo">'+escapeHtml(ev.emoji||"⏰")+'</div>'+
       '<div class="info"><div class="name">'+escapeHtml(ev.name)+'</div>'+
-      '<div class="time">'+escapeHtml(ev.time)+'</div></div>'+
+      '<div class="time">'+escapeHtml(ev.time)+' • '+escapeHtml(daysLabel(ev))+'</div></div>'+
       '<div class="badge">'+badge+'</div>'+
       '<button class="play" title="Послухати звук">'+PLAY_SVG+'</button>';
     div.querySelector(".play").onclick = ()=> playSound(ev);
@@ -388,7 +409,7 @@ function checkAlarms(){
   const hm = nowHM(), tk = todayKey();
   for(const ev of events){
     const key = ev.id + tk;
-    if(ev.time === hm && !ringing.has(key)){
+    if(ev.time === hm && isEnabled(ev) && isToday(ev) && !ringing.has(key)){
       ringing.add(key);
       fireAlarm(ev);
       break;
@@ -539,12 +560,29 @@ function toast(msg){
   clearTimeout(t._h);
   t._h = setTimeout(()=>{ t.style.opacity = "0"; }, 4000);
 }
+function applyRetired(ids){
+  // Remove alarms retired via alarms.json (e.g. replaced by a new list).
+  // Marks them dismissed so they never come back.
+  if(!Array.isArray(ids) || !ids.length) return false;
+  let changed = false;
+  const dis = dismissedIds();
+  ids.forEach(function(id){
+    const i = events.findIndex(function(e){ return e.id === id; });
+    if(i >= 0){ events.splice(i, 1); changed = true; }
+    if(dis.indexOf(id) < 0){ dis.push(id); changed = true; }
+  });
+  if(changed){ try{ localStorage.setItem(DISMISS_KEY, JSON.stringify(dis)); }catch(e){} }
+  return changed;
+}
 async function syncRemoteAlarms(){
   try{
     const r = await fetch(REMOTE_URL + "?t=" + Date.now(), {cache:"no-store"});
     if(!r.ok) return;
-    const arr = await r.json();
+    const data = await r.json();
+    let arr = data, retired = [];
+    if(data && !Array.isArray(data)){ arr = data.alarms || []; retired = data.retired || []; }
     if(!Array.isArray(arr)) return;
+    const retiredChanged = applyRetired(retired);
     const dismissed = dismissedIds();
     let added = 0, lastName = "";
     arr.forEach(a=>{
@@ -552,13 +590,21 @@ async function syncRemoteAlarms(){
       if(dismissed.indexOf(a.id) >= 0) return;
       if(events.some(e => e.id === a.id)) return;
       const sound = SOUNDS[a.sound] ? a.sound : "fanfare";
-      events.push({id:String(a.id), name:String(a.name || "Нова подія"), time:a.time, emoji:String(a.emoji || "⏰"), sound:sound});
+      let days = null;
+      if(Array.isArray(a.days)){
+        days = a.days.filter(function(d){ return typeof d === "number" && d >= 0 && d <= 6; });
+        if(!days.length) days = null;
+      }
+      const ev = {id:String(a.id), name:String(a.name || "Нова подія"), time:a.time, emoji:String(a.emoji || "⏰"), sound:sound};
+      if(days) ev.days = days;
+      if(a.enabled === false) ev.enabled = false;
+      events.push(ev);
       added++; lastName = String(a.name || "");
     });
-    if(added){
+    if(added || retiredChanged){
       events.sort((a,b)=> a.time < b.time ? -1 : 1);
       save(); renderList();
-      toast(added === 1 ? "✨ Lola додала: " + lastName : "✨ Lola додала " + added + " будильники!");
+      if(added) toast(added === 1 ? "✨ Lola додала: " + lastName : "✨ Lola додала " + added + " будильники!");
     }
   }catch(e){}
 }
