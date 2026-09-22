@@ -305,7 +305,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 19 • 21.09.2026</div>
+<div class="ver">версія 20 • 22.09.2026</div>
 </div><!-- /app -->
 
 <div id="alarm">
@@ -388,11 +388,21 @@ function ac(){
 }
 let activeNodes = []; // oscillators currently sounding — stoppable on dismiss
 let activeAudioEl = null;
+let previewAudio = null; // custom-sound preview from the schedule panel
+function killAudioEl(a){
+  // Nuclear stop for HTMLAudioElement: pause() alone cannot cancel a pending
+  // play() on iOS — the song would start AFTER dismiss and play to the end,
+  // untracked and unstoppable. Dropping the src guarantees silence.
+  try{ a.pause(); }catch(e){}
+  try{ a.removeAttribute("src"); }catch(e){}
+  try{ a.load(); }catch(e){}
+}
 function stopSound(){
   try{
     activeNodes.forEach(o=>{ try{ o.stop(); }catch(e){} });
     activeNodes = [];
-    if(activeAudioEl){ try{ activeAudioEl.pause(); }catch(e){} activeAudioEl = null; }
+    if(activeAudioEl){ killAudioEl(activeAudioEl); activeAudioEl = null; }
+    if(previewAudio){ killAudioEl(previewAudio); previewAudio = null; }
   }catch(e){}
 }
 function tone(freq, t0, dur, type, vol){
@@ -517,7 +527,7 @@ function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<
 /* ---------- Alarm engine ---------- */
 const ringing = new Set();
 function todayKey(){ const d=new Date(); return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate(); }
-let currentAlarm = null, alarmTimer = null;
+let currentAlarm = null, alarmTimer = null, alarmGen = 0;
 function checkAlarms(){
   const hm = nowHM(), tk = todayKey();
   for(const ev of events){
@@ -530,6 +540,7 @@ function checkAlarms(){
   }
 }
 function fireAlarm(ev){
+  const gen = ++alarmGen; // every new alarm invalidates any older loop chain
   stopSound();
   if(alarmTimer){ clearTimeout(alarmTimer); alarmTimer = null; }
   currentAlarm = ev;
@@ -540,10 +551,11 @@ function fireAlarm(ev){
   renderList();
   // play sound in a loop until dismissed (max ~90s)
   let plays = 0;
-  const loop = ()=>{ if(currentAlarm !== ev || plays >= 12) return; unlockAudio(); playSound(ev); plays++; alarmTimer = setTimeout(loop, 7000); };
+  const loop = ()=>{ if(gen !== alarmGen || currentAlarm !== ev || plays >= 12) return; unlockAudio(); playSound(ev); plays++; alarmTimer = setTimeout(loop, 7000); };
   loop();
 }
 function dismissAlarm(){
+  alarmGen++; // kill any loop chain even if its timer somehow wasn't cleared
   stopSound();
   currentAlarm = null;
   if(alarmTimer){ clearTimeout(alarmTimer); alarmTimer = null; }
@@ -759,7 +771,19 @@ function renderSched(){
       };
     });
     q(".ssound").onchange = e=>{ ev.sound = e.target.value; ev.customSound = null; save(); renderSched(); };
-    q(".splay").onclick = ()=>{ ev.customSound ? new Audio(ev.customSound).play().catch(()=>{}) : testSound(ev.sound); };
+    q(".splay").onclick = ()=>{
+      // tap again while previewing = stop; preview is tracked so the alarm's
+      // Done button (stopSound) can always silence it too
+      if(previewAudio){ killAudioEl(previewAudio); previewAudio = null; return; }
+      if(ev.customSound){
+        const a = new Audio(ev.customSound);
+        previewAudio = a;
+        a.onended = ()=>{ if(previewAudio === a) previewAudio = null; };
+        a.play().catch(()=>{ if(previewAudio === a) previewAudio = null; });
+      } else {
+        testSound(ev.sound);
+      }
+    };
     const sf = q(".sfile");
     sf.onchange = ()=>{
       const file = sf.files[0]; if(!file) return;
