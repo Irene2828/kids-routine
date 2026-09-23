@@ -387,7 +387,7 @@
   <button id="gearBtn" title="Розклад">☰</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 24 • 23.09.2026</div>
+  <div id="verChip">версія 25 • 23.09.2026</div>
 </div>
 <div id="app">
 <header>
@@ -407,7 +407,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 24 • 23.09.2026</div>
+<div class="ver">версія 25 • 23.09.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -496,7 +496,7 @@ function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(events)); }cat
    версію index.html; якщо новіша — показує тост «✨ Є оновлення» з кнопкою
    «Оновити» (location.reload). Вирішує проблему заморожених iOS web clip:
    перезберігати іконку більше не треба. */
-const APP_VER = 24;
+const APP_VER = 25;
 let updToastShown = false, lastUpdCheck = 0;
 function checkForUpdate(){
   const now = Date.now();
@@ -940,13 +940,28 @@ function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<
 /* ---------- Alarm engine ---------- */
 const ringing = new Set();
 function todayKey(){ const d=new Date(); return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate(); }
+/* v25: fired alarms persist across reloads — a refresh inside the same minute
+   must not re-fire an alarm that already rang. Key includes the time so that
+   editing an alarm's time still lets it fire again. */
+const FIRED_LS = "kidsFiredV1";
+let firedLS = {};
+try{
+  firedLS = JSON.parse(localStorage.getItem(FIRED_LS) || "{}") || {};
+  const tk0 = todayKey(), keep = {};
+  Object.keys(firedLS).forEach(k=>{ if(k.indexOf("|"+tk0) >= 0) keep[k] = 1; });
+  firedLS = keep;
+  localStorage.setItem(FIRED_LS, JSON.stringify(firedLS));
+}catch(e){ firedLS = {}; }
+function markFired(pkey){ firedLS[pkey] = 1; try{ localStorage.setItem(FIRED_LS, JSON.stringify(firedLS)); }catch(e){} }
 let currentAlarm = null, alarmTimer = null, alarmGen = 0;
 function checkAlarms(){
   const hm = nowHM(), tk = todayKey();
   for(const ev of events){
     const key = ev.id + tk;
-    if(ev.time === hm && isEnabled(ev) && isToday(ev) && !ringing.has(key)){
+    const pkey = ev.id + "|" + ev.time + "|" + tk;
+    if(ev.time === hm && isEnabled(ev) && isToday(ev) && !ringing.has(key) && !firedLS[pkey]){
       ringing.add(key);
+      markFired(pkey);
       fireAlarm(ev);
       break;
     }
@@ -967,7 +982,7 @@ function fireAlarm(ev){
   const loop = ()=>{ if(gen !== alarmGen || currentAlarm !== ev || plays >= 12) return; unlockAudio(); playSound(ev); plays++; alarmTimer = setTimeout(loop, 7000); };
   loop();
 }
-function dismissAlarm(){
+function silenceSound(){
   alarmGen++; // kill any loop chain even if its timer somehow wasn't cleared
   stopSound();
   currentAlarm = null;
@@ -976,6 +991,15 @@ function dismissAlarm(){
   renderStageClock();
   renderList();
 }
+function dismissAlarm(){
+  silenceSound();
+  // v25: tell every other open copy (tablet Safari + home-screen icon + iPhone)
+  // to shut up too — one "Готово" silences them all
+  try{ localStorage.setItem("kidsSilenceV1", String(Date.now())); }catch(e){}
+}
+// another copy dismissed an alarm — silence this one as well.
+// No echo: the handler never writes back, so instances can't ping-pong.
+window.addEventListener("storage", function(e){ if(e.key === "kidsSilenceV1") silenceSound(); });
 $("alarmDone").onclick = dismissAlarm;
 // instant response on old tablets even if click is delayed;
 // non-passive + preventDefault kills the iOS ghost click that could
@@ -1353,7 +1377,8 @@ const PAUSE_KEY = "kidsRoutine.slidePaused.v1";
 const ICON_PAUSE = '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.6"/><rect x="14" y="5" width="4" height="14" rx="1.6"/></svg>';
 const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.53.85l10.2-6.5a1 1 0 0 0 0-1.7L9.53 4.65A1 1 0 0 0 8 5.5z"/></svg>';
 function slidePaused(){ try{ return localStorage.getItem(PAUSE_KEY) === "1"; }catch(e){ return false; } }
-function effectiveSec(){ const s = slideSec(); return (s > 0 && !slidePaused()) ? s : 0; }
+let slideArmed = false; // v25: slideshow never autostarts on open — only via the play button
+function effectiveSec(){ const s = slideSec(); return (slideArmed && s > 0 && !slidePaused()) ? s : 0; }
 function renderSlideToggle(){
   const b = $("slideToggle");
   if(!b) return;
@@ -1552,9 +1577,8 @@ $("slideInt").addEventListener("change", ()=>{ try{ localStorage.setItem(SINT_KE
 $("photoReset").onclick = ()=>{ try{ localStorage.removeItem(HIDE_KEY); }catch(e){} renderPhotoMgr(); startSlideshow(); toast("↩️ Приховані фото повернуто"); };
 $("slideToggle").onclick = ()=>{
   try{
-    if(slidePaused()){ localStorage.removeItem(PAUSE_KEY); }
-    else if(slideSec() === 0){ localStorage.setItem(SINT_KEY, "15"); }
-    else { localStorage.setItem(PAUSE_KEY, "1"); }
+    if(effectiveSec() > 0){ localStorage.setItem(PAUSE_KEY, "1"); } // running -> pause
+    else{ slideArmed = true; localStorage.removeItem(PAUSE_KEY); if(slideSec() === 0) localStorage.setItem(SINT_KEY, "15"); } // -> play
   }catch(e){}
   renderPhotoMgr(); startSlideshow();
 };
