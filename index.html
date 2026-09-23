@@ -387,7 +387,7 @@
   <button id="gearBtn" title="Розклад">☰</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 23 • 23.09.2026</div>
+  <div id="verChip">версія 24 • 23.09.2026</div>
 </div>
 <div id="app">
 <header>
@@ -407,7 +407,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 23 • 23.09.2026</div>
+<div class="ver">версія 24 • 23.09.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -491,6 +491,47 @@ function load(){
   return JSON.parse(JSON.stringify(DEFAULT_EVENTS));
 }
 function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(events)); }catch(e){} }
+/* ---------- v24: self update check ----------
+   При кожному відкритті (і поверненні в застосунок) питає сервер про свіжу
+   версію index.html; якщо новіша — показує тост «✨ Є оновлення» з кнопкою
+   «Оновити» (location.reload). Вирішує проблему заморожених iOS web clip:
+   перезберігати іконку більше не треба. */
+const APP_VER = 24;
+let updToastShown = false, lastUpdCheck = 0;
+function checkForUpdate(){
+  const now = Date.now();
+  if(updToastShown || now - lastUpdCheck < 10*60*1000) return; // не частіше разу на 10 хв
+  lastUpdCheck = now;
+  const url = location.href.split("#")[0].split("?")[0] + "?_upd=" + now;
+  fetch(url, {cache:"no-store"}).then(r => r.ok ? r.text() : Promise.reject())
+    .then(t => {
+      const m = t.match(/версія\s+(\d+)/);
+      if(m && +m[1] > APP_VER && !updToastShown){
+        updToastShown = true;
+        showUpdateToast(+m[1]);
+      }
+    }).catch(()=>{ /* offline — мовчимо */ });
+}
+function showUpdateToast(v){
+  let b = document.getElementById("updToast");
+  if(b) return;
+  b = document.createElement("div");
+  b.id = "updToast";
+  b.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#3a2e2e;color:#fff;padding:10px 10px 10px 18px;border-radius:999px;font-size:15px;font-weight:700;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px;max-width:94vw;";
+  const label = document.createElement("span");
+  label.textContent = "✨ Є оновлення (v" + v + ")";
+  const btn = document.createElement("button");
+  btn.textContent = "Оновити";
+  btn.style.cssText = "background:#ff9f1c;border:none;color:#fff;font-weight:800;font-size:15px;padding:8px 16px;border-radius:999px;";
+  btn.onclick = ()=>{ location.reload(); };
+  const x = document.createElement("button");
+  x.textContent = "✕";
+  x.style.cssText = "background:none;border:none;color:#cbb;font-size:15px;padding:6px 8px;";
+  x.onclick = ()=>{ b.remove(); };
+  b.appendChild(label); b.appendChild(btn); b.appendChild(x);
+  document.body.appendChild(b);
+}
+
 /* ---------- v23: Calendar + School ----------
    📅 Calendar (stage, left under ticker): month grid in app style, tap a day
    to see its events; add/edit/delete like alarms (+ in header, tap name/date
@@ -544,13 +585,13 @@ function openCalModal(mode){
   renderCalBody();
   $("calModal").classList.add("show");
 }
-function closeCalModal(){ $("calModal").classList.remove("show"); }
-$("calBtn").onclick = ()=> openCalModal("calendar");
-$("schoolBtn").onclick = ()=> openCalModal("school");
-$("calX").onclick = closeCalModal;
-$("calModal").addEventListener("click", e=>{ if(e.target === $("calModal")) closeCalModal(); });
-document.addEventListener("keydown", e=>{ if(e.key === "Escape" && $("calModal").classList.contains("show")) closeCalModal(); });
-$("calAdd").onclick = ()=>{
+function closeCalModal(){ document.getElementById("calModal").classList.remove("show"); }
+document.getElementById("calBtn").onclick = ()=> openCalModal("calendar");
+document.getElementById("schoolBtn").onclick = ()=> openCalModal("school");
+document.getElementById("calX").onclick = closeCalModal;
+document.getElementById("calModal").addEventListener("click", e=>{ if(e.target === document.getElementById("calModal")) closeCalModal(); });
+document.addEventListener("keydown", e=>{ if(e.key === "Escape" && document.getElementById("calModal").classList.contains("show")) closeCalModal(); });
+document.getElementById("calAdd").onclick = ()=>{
   const p = calSel.split("-").map(Number);
   const e = {id:"c"+Date.now(), name:"Нова подія", emoji:"✨", y:p[0], m:p[1], d:p[2], yearly:false};
   calEvents.push(e); saveCal(); renderCalBody();
@@ -1529,6 +1570,9 @@ setInterval(()=>{ tickClock(); checkAlarms(); }, 1000);
 setInterval(renderStageClock, 1000);
 renderStageClock();
 setInterval(renderList, 30000);
+setTimeout(checkForUpdate, 5000);
+document.addEventListener("visibilitychange", function(){ if(!document.hidden) checkForUpdate(); });
+window.addEventListener("pageshow", function(e){ if(e.persisted) checkForUpdate(); });
 </script>
 </body>
 </html>
