@@ -84,6 +84,10 @@
   }
   .cd-card .cd-ico{font-size:3.8vmin; line-height:1;}
   .cd-card.today{background:linear-gradient(135deg, rgba(230,126,34,.8), rgba(211,84,0,.8)); border-color:rgba(255,255,255,.28);}
+  /* v30: idle auto-hide — all stage chrome fades out, tap anywhere wakes */
+  #clockOverlay, #slideToggle, #gearBtn, .stageIcon, #verChip{transition:opacity .9s ease;}
+  body.idle #clockOverlay, body.idle #slideToggle, body.idle #gearBtn,
+  body.idle .stageIcon, body.idle #verChip{opacity:0 !important; pointer-events:none !important;}
   #gearBtn{
     position:absolute; top:calc(env(safe-area-inset-top) + 66px); right:14px; z-index:10;
     width:46px; height:46px; border:none; border-radius:50%; cursor:pointer;
@@ -391,7 +395,7 @@
   <button id="gearBtn" title="Розклад">☰</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 29 • 23.09.2026</div>
+  <div id="verChip">версія 30 • 23.09.2026</div>
 </div>
 <div id="app">
 <header>
@@ -411,7 +415,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 29 • 23.09.2026</div>
+<div class="ver">версія 30 • 23.09.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -500,7 +504,7 @@ function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(events)); }cat
    версію index.html; якщо новіша — показує тост «✨ Є оновлення» з кнопкою
    «Оновити» (location.reload). Вирішує проблему заморожених iOS web clip:
    перезберігати іконку більше не треба. */
-const APP_VER = 28;
+const APP_VER = 30;
 let updToastShown = false, lastUpdCheck = 0;
 function checkForUpdate(){
   const now = Date.now();
@@ -979,6 +983,7 @@ function fireAlarm(ev){
   $("alarmEmo").textContent = ev.emoji || "⏰";
   $("alarmName").textContent = ev.name + "!";
   $("alarm").classList.add("show");
+  pokeIdle();
   renderStageClock();
   renderList();
   // play sound in a loop until dismissed (max ~90s)
@@ -1291,7 +1296,7 @@ function dismissedIds(){
   try{ const a = JSON.parse(localStorage.getItem(DISMISS_KEY) || "[]"); return Array.isArray(a) ? a : []; }catch(e){ return []; }
 }
 function rememberDismissed(id){
-  try{ const a = dismissedIds(); if(a.indexOf(id) < 0){ a.push(id); localStorage.setItem(DISMISS_KEY, JSON.stringify(a)); }catch(e){} }
+  try{ const a = dismissedIds(); if(a.indexOf(id) < 0){ a.push(id); localStorage.setItem(DISMISS_KEY, JSON.stringify(a)); } }catch(e){}
 }
 function toast(msg){
   let t = document.getElementById("toast");
@@ -1406,7 +1411,7 @@ function renderStageClock(){
   const d = new Date();
   const p = n => String(n).padStart(2, "0");
   $("clockTime").textContent = p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
-  const days = ["неділя","понеділок","вівторок","середа","четвер","пʼятниця","субота"];
+  const days = ["неділя","понеділок","вівторок","середа","четвер","п'ятниця","субота"];
   const mon = ["січня","лютого","березня","квітня","травня","червня","липня","серпня","вересня","жовтня","листопада","грудня"];
   $("clockDate").textContent = days[d.getDay()] + ", " + d.getDate() + " " + mon[d.getMonth()];
   renderCountdowns(d);
@@ -1428,6 +1433,24 @@ function renderCountdowns(d){
     return '<div class="cd-card' + (n === 0 ? " today" : "") + '"><span class="cd-ico">🎉</span><span>' + b.name + " ДН — " + label + "</span></div>";
   }).join("");
 }
+/* ---------- Idle auto-hide (v30): after 10s of no interaction all stage
+   chrome (clock, chips, buttons, version) fades out; any tap/key wakes it.
+   Never hides while panel, calendar modal or alarm is open. */
+let idleTimer = null;
+const IDLE_MS = 10000;
+function uiBusy(){
+  return document.body.classList.contains("panelOpen")
+      || ($("calModal") && $("calModal").classList.contains("show"))
+      || ($("alarm") && $("alarm").classList.contains("show"));
+}
+function pokeIdle(){
+  document.body.classList.remove("idle");
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(()=>{ if(!uiBusy()) document.body.classList.add("idle"); }, IDLE_MS);
+}
+["pointerdown","touchstart","keydown","wheel"].forEach(ev =>
+  document.addEventListener(ev, pokeIdle, {passive:true}));
+pokeIdle();
 /* ---------- Photo stage (v16): fullscreen permanent background while waiting ----------
    The autumn cover (cover.jpg) fills the whole screen; every other photo is
    centered (contain) over an oklch background. Crossfading <img> layers. */
