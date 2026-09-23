@@ -391,7 +391,7 @@
   <button id="gearBtn" title="Розклад">☰</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 34 • 23.09.2026</div>
+  <div id="verChip">версія 35 • 23.09.2026</div>
 </div>
 <div id="app">
 <header>
@@ -411,7 +411,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 34 • 23.09.2026</div>
+<div class="ver">версія 35 • 23.09.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -500,7 +500,7 @@ function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(events)); }cat
    версію index.html; якщо новіша — показує тост «✨ Є оновлення» з кнопкою
    «Оновити» (location.reload). Вирішує проблему заморожених iOS web clip:
    перезберігати іконку більше не треба. */
-const APP_VER = 34;
+const APP_VER = 35;
 let updToastShown = false, lastUpdCheck = 0;
 function checkForUpdate(){
   const now = Date.now();
@@ -816,7 +816,11 @@ function killAudioEl(a){
 }
 function stopSound(){
   try{
-    activeNodes.forEach(o=>{ try{ o.stop(); }catch(e){} });
+    // v35: tone() pre-schedules o.stop(t0+dur), so a second o.stop() here throws
+    // InvalidStateError and the note survives -> it would play on the next
+    // unlockAudio() resume (e.g. the dismiss tap) AFTER "Готово" was pressed.
+    // disconnect() guarantees silence even when stop() throws.
+    activeNodes.forEach(o=>{ try{ o.stop(); }catch(e){} try{ o.disconnect(); }catch(e){} });
     activeNodes = [];
     if(activeAudioEl){ killAudioEl(activeAudioEl); activeAudioEl = null; }
     if(previewAudio){ killAudioEl(previewAudio); previewAudio = null; }
