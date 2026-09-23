@@ -204,6 +204,27 @@
     font-size:11px; color:rgba(255,255,255,.55); text-shadow:0 1px 4px rgba(0,0,0,.5);
     pointer-events:none;
   }
+  /* ---------- Fact of the day (v36) ---------- */
+  #factBtn{
+    position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom) + 32px); z-index:11;
+    width:46px; height:46px; border:none; border-radius:50%; cursor:pointer;
+    background:rgba(20,20,22,.45); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+    font-size:24px; line-height:46px; color:#fff; text-align:center; padding:0;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 16px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  #factBtn:active{transform:scale(.92);}
+  #factCard{
+    position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom) + 88px); z-index:12;
+    max-width:min(320px, calc(100vw - 24px));
+    background:rgba(20,20,22,.82); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    color:#fff; border-radius:16px; padding:14px 16px;
+    box-shadow:0 8px 28px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.18);
+    font-size:15px; line-height:1.45; display:none;
+  }
+  #factCard.show{display:block;}
+  #factCard .factTitle{font-weight:800; margin-bottom:6px; font-size:14px; color:#ffd60a;}
+  #factCard .factTomorrow{margin-top:10px; font-size:12.5px; color:rgba(255,255,255,.65);}
   header{width:100%; max-width:560px; text-align:center; padding:18px 8px 6px;}
   header h1{margin:0; font-size:30px; letter-spacing:.5px;}
   #clock{font-size:52px; font-weight:800; margin:6px 0 0; font-variant-numeric:tabular-nums;}
@@ -391,7 +412,9 @@
   <button id="gearBtn" title="Розклад">☰</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 35 • 23.09.2026</div>
+  <div id="verChip">версія 36 • 23.09.2026</div>
+  <button id="factBtn" title="Факт дня">💡</button>
+  <div id="factCard"><div class="factTitle">Дивовижний факт дня 💡</div><div id="factText"></div><div class="factTomorrow">До завтра — буде новий факт!</div></div>
 </div>
 <div id="app">
 <header>
@@ -411,7 +434,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 35 • 23.09.2026</div>
+<div class="ver">версія 36 • 23.09.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -500,7 +523,7 @@ function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(events)); }cat
    версію index.html; якщо новіша — показує тост «✨ Є оновлення» з кнопкою
    «Оновити» (location.reload). Вирішує проблему заморожених iOS web clip:
    перезберігати іконку більше не треба. */
-const APP_VER = 35;
+const APP_VER = 36;
 let updToastShown = false, lastUpdCheck = 0;
 function checkForUpdate(){
   const now = Date.now();
@@ -1257,7 +1280,7 @@ $("addAlarmBtn").onclick = ()=>{
   const rows = document.querySelectorAll("#schedList .srow");
   for(let i = 0; i < rows.length; i++){
     if(rows[i].dataset.id === ev.id){ const n = rows[i].querySelector(".sname"); if(n) n.click(); break; }
-  }
+  };
 };
 $("tabSched").onclick = ()=> setTab("sched");
 $("tabPhoto").onclick = ()=> setTab("photo");
@@ -1295,14 +1318,14 @@ function dismissedIds(){
   try{ const a = JSON.parse(localStorage.getItem(DISMISS_KEY) || "[]"); return Array.isArray(a) ? a : []; }catch(e){ return []; }
 }
 function rememberDismissed(id){
-  try{ const a = dismissedIds(); if(a.indexOf(id) < 0){ a.push(id); localStorage.setItem(DISMISS_KEY, JSON.stringify(a)); } }catch(e){}
+  try{ const a = dismissedIds(); if(a.indexOf(id) < 0){ a.push(id); localStorage.setItem(DISMISS_KEY, JSON.stringify(a)); }catch(e){} }
 }
 function toast(msg){
   let t = document.getElementById("toast");
   if(!t){
     t = document.createElement("div");
     t.id = "toast";
-    t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#3a2e2e;color:#fff;padding:12px 20px;border-radius:999px;font-size:15px;font-weight:700;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .3s;max-width:90vw;text-align:center;";
+    t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#3a2e2e;color:#fff;padding:10px 10px 10px 18px;border-radius:999px;font-size:15px;font-weight:700;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px;max-width:94vw;";
     document.body.appendChild(t);
   }
   t.textContent = msg;
@@ -1324,46 +1347,75 @@ function applyRetired(ids){
   if(changed){ try{ localStorage.setItem(DISMISS_KEY, JSON.stringify(dis)); }catch(e){} }
   return changed;
 }
+/* ---------- Fact of the day (v36) ---------- */
+const FACTS_URL = "https://raw.githubusercontent.com/Irene2828/kids-routine/main/facts.json";
+const FALLBACK_FACTS = [
+"Восьминіг має три серця — і блакитну кров!",
+"На Венері доба триває довше, ніж цілий рік.",
+"Акули з'явилися на Землі раніше, ніж дерева.",
+"Равлик може спати аж три роки поспіль.",
+"Язик жирафи завдовжки майже пів метра — і він синього кольору!",
+"Медуза не має ні мозку, ні серця, ні кісток.",
+"Блискавка гарячіша за поверхню Сонця.",
+"На Сатурні йде дощ із діамантів.",
+"Сова не може рухати очима, тому крутить головою майже на повний оберт.",
+"Кенгуру не вміє ходити назад.",
+"Серце синього кита таке велике, що крізь його артерію могла б пропливти дитина.",
+"У бджоли п'ять очей.",
+"Фламінго народжуються сірими, а рожевими стають завдяки їжі.",
+"У людини і в жирафи однакова кількість кісток у шиї — сім.",
+"Павук — не комаха: у нього вісім ніг, а не шість.",
+"Робот Софія отримала справжнє громадянство.",
+"На Марсі літав маленький гелікоптер Ingenuity — перший політ в іншому світі!",
+"Слон — єдина тварина, яка не вміє стрибати.",
+"Дельфін спить однією половиною мозку, а другою пильнує.",
+"У коали відбитки пальців майже як у людини.",
+"Гаряча вода може замерзнути швидше за холодну.",
+"На Місяці немає вітру, тому сліди астронавтів лежать там досі.",
+"Восьминіг може пролізти в отвір розміром з монету.",
+"Кажан — єдиний ссавець, який уміє по-справжньому літати.",
+"У равлика понад 14 тисяч крихітних зубів!",
+"Світло від Сонця летить до Землі 8 хвилин.",
+"Пінгвін дарує камінчик тому, з ким хоче дружити.",
+"Морські коники-татусі самі виношують малюків.",
+"Банани трохи радіоактивні — але це зовсім не страшно.",
+"Твій ніс пам'ятає близько трильйона різних запахів."
+];
+let factList = null;
+function factDayIndex(n){
+  const d = new Date(), s = new Date(d.getFullYear(), 0, 0);
+  return Math.floor((d - s) / 864e5) % n;
+}
+async function ensureFacts(){
+  if(factList) return factList;
+  try{
+    const r = await fetch(FACTS_URL + "?t=" + Date.now(), {cache:"no-store"});
+    if(r.ok){ const j = await r.json(); if(j && j.length){ factList = j; return factList; } }
+  }catch(e){}
+  factList = FALLBACK_FACTS;
+  return factList;
+}
+async function toggleFact(){
+  const card = $("factCard");
+  if(card.classList.contains("show")){ card.classList.remove("show"); return; }
+  const list = await ensureFacts();
+  $("factText").textContent = list[factDayIndex(list.length)];
+  card.classList.add("show");
+}
+$("factBtn").addEventListener("click", function(){ toggleFact(); });
+ensureFacts();
 async function syncRemoteAlarms(){
   try{
     const r = await fetch(REMOTE_URL + "?t=" + Date.now(), {cache:"no-store"});
-    if(!r.ok) return;
-    const data = await r.json();
-    let arr = data, retired = [];
-    if(data && !Array.isArray(data)){ arr = data.alarms || []; retired = data.retired || []; }
-    if(!Array.isArray(arr)) return;
-    const retiredChanged = applyRetired(retired);
-    const dismissed = dismissedIds();
-    let added = 0, lastName = "";
-    arr.forEach(a=>{
-      if(!a || !a.id || !/^\d{2}:\d{2}$/.test(a.time || "")) return;
-      if(dismissed.indexOf(a.id) >= 0) return;
-      if(events.some(e => e.id === a.id)) return;
-      const sound = SOUNDS[a.sound] ? a.sound : "fanfare";
-      let days = null;
-      if(Array.isArray(a.days)){
-        days = a.days.filter(function(d){ return typeof d === "number" && d >= 0 && d <= 6; });
-        if(!days.length) days = null;
-      }
-      const ev = {id:String(a.id), name:String(a.name || "Нова подія"), time:a.time, emoji:String(a.emoji || "⏰"), sound:sound};
-      if(days) ev.days = days;
-      if(a.enabled === false) ev.enabled = false;
-      events.push(ev);
-      added++; lastName = String(a.name || "");
-    });
-    if(added || retiredChanged){
-      events.sort((a,b)=> a.time < b.time ? -1 : 1);
-      save(); renderList();
-      if(added) toast(added === 1 ? "✨ Lola додала: " + lastName : "✨ Lola додала " + added + " будильники!");
-    }
+    if(r.ok){ const j = await r.json(); if(j && j.length){ factList = j; return factList; } }
   }catch(e){}
+  factList = FALLBACK_FACTS;
+  return factList;
 }
-
 /* ---------- Photo slideshow (left panel, wide screens) ---------- */
 const DEFAULT_PHOTOS = ["cover.jpg","photos/p1.jpg","photos/p2.jpg","photos/p3.jpg",
                         "photos/p4.jpg","photos/p5.jpg","photos/p6.jpg","photos/p7.jpg","photos/p8.jpg"];
 const HIDE_KEY = "kidsRoutine.hiddenPhotos.v1";
-const CPHOTO_KEY = "kidsRoutine.customPhotos.v1";
 const SINT_KEY = "kidsRoutine.slideSec.v1";
 function hiddenPhotos(){
   try{ const a = JSON.parse(localStorage.getItem(HIDE_KEY) || "[]"); return Array.isArray(a) ? a : []; }catch(e){ return []; }
@@ -1383,7 +1435,7 @@ function slideList(){
 }
 const PAUSE_KEY = "kidsRoutine.slidePaused.v1";
 const ICON_PAUSE = '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.6"/><rect x="14" y="5" width="4" height="14" rx="1.6"/></svg>';
-const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.53.85l10.2-6.5a1 1 0 0 0 0-1.7L9.53 4.65A1 1 0 0 0 8 5.5z"/></svg>';
+const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.53.85l10.2-6.5a1 1 0 0 0 1.7L9.53 4.65A1 1 0 0 0 8 5.5z"/></svg>';
 function slidePaused(){ try{ return localStorage.getItem(PAUSE_KEY) === "1"; }catch(e){ return false; } }
 let slideArmed = false; // v25: slideshow never autostarts on open — only via the play button
 function effectiveSec(){ const s = slideSec(); return (slideArmed && s > 0 && !slidePaused()) ? s : 0; }
