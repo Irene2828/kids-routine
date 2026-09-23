@@ -85,9 +85,9 @@
   .cd-card .cd-ico{font-size:3.8vmin; line-height:1;}
   .cd-card.today{background:linear-gradient(135deg, rgba(230,126,34,.8), rgba(211,84,0,.8)); border-color:rgba(255,255,255,.28);}
   /* v30: idle auto-hide — all stage chrome fades out, tap anywhere wakes */
-  #clockOverlay, #slideToggle, #gearBtn, .stageIcon, #verChip{transition:opacity .9s ease;}
+  #clockOverlay, #slideToggle, #gearBtn, .stageIcon, #verChip, #ticker{transition:opacity .9s ease;}
   body.idle #clockOverlay, body.idle #slideToggle, body.idle #gearBtn,
-  body.idle .stageIcon, body.idle #verChip{opacity:0 !important; pointer-events:none !important;}
+  body.idle .stageIcon, body.idle #verChip, body.idle #ticker{opacity:0 !important; pointer-events:none !important;}
   #gearBtn{
     position:absolute; top:calc(env(safe-area-inset-top) + 66px); right:14px; z-index:10;
     width:46px; height:46px; border:none; border-radius:50%; cursor:pointer;
@@ -395,7 +395,7 @@
   <button id="gearBtn" title="Розклад">☰</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 30 • 23.09.2026</div>
+  <div id="verChip">версія 31 • 23.09.2026</div>
 </div>
 <div id="app">
 <header>
@@ -415,7 +415,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 30 • 23.09.2026</div>
+<div class="ver">версія 31 • 23.09.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -504,7 +504,7 @@ function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(events)); }cat
    версію index.html; якщо новіша — показує тост «✨ Є оновлення» з кнопкою
    «Оновити» (location.reload). Вирішує проблему заморожених iOS web clip:
    перезберігати іконку більше не треба. */
-const APP_VER = 30;
+const APP_VER = 31;
 let updToastShown = false, lastUpdCheck = 0;
 function checkForUpdate(){
   const now = Date.now();
@@ -1296,7 +1296,7 @@ function dismissedIds(){
   try{ const a = JSON.parse(localStorage.getItem(DISMISS_KEY) || "[]"); return Array.isArray(a) ? a : []; }catch(e){ return []; }
 }
 function rememberDismissed(id){
-  try{ const a = dismissedIds(); if(a.indexOf(id) < 0){ a.push(id); localStorage.setItem(DISMISS_KEY, JSON.stringify(a)); } }catch(e){}
+  try{ const a = dismissedIds(); if(a.indexOf(id) < 0){ a.push(id); localStorage.setItem(DISMISS_KEY, JSON.stringify(a)); }catch(e){} }
 }
 function toast(msg){
   let t = document.getElementById("toast");
