@@ -65,6 +65,20 @@
     font-size:4.5vmin; font-weight:400; letter-spacing:.01em;
     text-shadow:0 1px 12px rgba(0,0,0,.5);
   }
+  /* v21: birthday countdowns under the clock (frosted chips, left+right) */
+  #countdowns{
+    margin-top:2.4vmin; display:flex; gap:2vmin; align-items:center; justify-content:center;
+  }
+  .cd-chip{
+    display:flex; align-items:center; gap:1.2vmin;
+    padding:1.2vmin 2.6vmin; border-radius:999px;
+    background:rgba(20,20,22,.38); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    box-shadow:0 4px 18px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.22);
+    color:#fff; font-size:3.2vmin; font-weight:600; letter-spacing:.01em;
+    text-shadow:0 1px 8px rgba(0,0,0,.45); white-space:nowrap;
+  }
+  .cd-chip .cd-ico{font-size:3.6vmin; line-height:1;}
+  .cd-chip.today{background:rgba(214,118,28,.6);}
   #gearBtn{
     position:absolute; top:calc(env(safe-area-inset-top) + 66px); right:14px; z-index:10;
     width:46px; height:46px; border:none; border-radius:50%; cursor:pointer;
@@ -282,10 +296,10 @@
   <img id="ph0" class="full on" src="cover.jpg" alt="">
   <img id="ph1" alt="">
   <div id="ticker" style="display:none"><div id="tickerInner"></div></div>
-  <div id="clockOverlay"><div id="clockTime">--:--:--</div><div id="clockDate"></div></div>
+  <div id="clockOverlay"><div id="clockTime">--:--:--</div><div id="clockDate"></div><div id="countdowns"></div></div>
   <button id="slideToggle" aria-label="Зупинити слайдшоу"></button>
   <button id="gearBtn" title="Розклад">☰</button>
-  <div id="verChip">версія 20 • 22.09.2026</div>
+  <div id="verChip">версія 21 • 23.09.2026</div>
 </div>
 <div id="app">
 <header>
@@ -305,7 +319,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 20 • 22.09.2026</div>
+<div class="ver">версія 21 • 23.09.2026</div>
 </div><!-- /app -->
 
 <div id="alarm">
@@ -967,6 +981,32 @@ function renderStageClock(){
   const days = ["неділя","понеділок","вівторок","середа","четвер","п'ятниця","субота"];
   const mon = ["січня","лютого","березня","квітня","травня","червня","липня","серпня","вересня","жовтня","листопада","грудня"];
   $("clockDate").textContent = days[d.getDay()] + ", " + d.getDate() + " " + mon[d.getMonth()];
+  renderCountdowns(d);
+}
+/* ---------- Birthday countdowns (v21) ----------
+   Two chips under the stage clock: Марчик — 30.09, Алек — 01.10. */
+const BIRTHDAYS = [
+  {name:"Марчик", month:9, day:30},
+  {name:"Алек", month:10, day:1}
+];
+function daysUntil(month, day, now){
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let t = new Date(now.getFullYear(), month - 1, day);
+  if(t < startOfToday) t = new Date(now.getFullYear() + 1, month - 1, day);
+  return Math.round((t - startOfToday) / 86400000);
+}
+function pluralDays(n){
+  if(n % 10 === 1 && n % 100 !== 11) return "день";
+  if(n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return "дні";
+  return "днів";
+}
+function renderCountdowns(d){
+  const box = $("countdowns"); if(!box) return;
+  box.innerHTML = BIRTHDAYS.map(b => {
+    const n = daysUntil(b.month, b.day, d);
+    const label = n === 0 ? "З Днем народження!" : "залишилось " + n + " " + pluralDays(n);
+    return '<div class="cd-chip' + (n === 0 ? " today" : "") + '"><span class="cd-ico">🎉</span><span>' + b.name + " — " + label + "</span></div>";
+  }).join("");
 }
 /* ---------- Photo stage (v16): fullscreen permanent background while waiting ----------
    The autumn cover (cover.jpg) fills the whole screen; every other photo is
