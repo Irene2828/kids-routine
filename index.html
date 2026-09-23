@@ -1280,7 +1280,7 @@ $("addAlarmBtn").onclick = ()=>{
   const rows = document.querySelectorAll("#schedList .srow");
   for(let i = 0; i < rows.length; i++){
     if(rows[i].dataset.id === ev.id){ const n = rows[i].querySelector(".sname"); if(n) n.click(); break; }
-  };
+  }
 };
 $("tabSched").onclick = ()=> setTab("sched");
 $("tabPhoto").onclick = ()=> setTab("photo");
@@ -1318,14 +1318,14 @@ function dismissedIds(){
   try{ const a = JSON.parse(localStorage.getItem(DISMISS_KEY) || "[]"); return Array.isArray(a) ? a : []; }catch(e){ return []; }
 }
 function rememberDismissed(id){
-  try{ const a = dismissedIds(); if(a.indexOf(id) < 0){ a.push(id); localStorage.setItem(DISMISS_KEY, JSON.stringify(a)); }catch(e){} }
+  try{ const a = dismissedIds(); if(a.indexOf(id) < 0){ a.push(id); localStorage.setItem(DISMISS_KEY, JSON.stringify(a)); } }catch(e){}
 }
 function toast(msg){
   let t = document.getElementById("toast");
   if(!t){
     t = document.createElement("div");
     t.id = "toast";
-    t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#3a2e2e;color:#fff;padding:10px 10px 10px 18px;border-radius:999px;font-size:15px;font-weight:700;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px;max-width:94vw;";
+    t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#3a2e2e;color:#fff;padding:12px 20px;border-radius:999px;font-size:15px;font-weight:700;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .3s;max-width:90vw;text-align:center;";
     document.body.appendChild(t);
   }
   t.textContent = msg;
@@ -1407,15 +1407,43 @@ ensureFacts();
 async function syncRemoteAlarms(){
   try{
     const r = await fetch(REMOTE_URL + "?t=" + Date.now(), {cache:"no-store"});
-    if(r.ok){ const j = await r.json(); if(j && j.length){ factList = j; return factList; } }
+    if(!r.ok) return;
+    const data = await r.json();
+    let arr = data, retired = [];
+    if(data && !Array.isArray(data)){ arr = data.alarms || []; retired = data.retired || []; }
+    if(!Array.isArray(arr)) return;
+    const retiredChanged = applyRetired(retired);
+    const dismissed = dismissedIds();
+    let added = 0, lastName = "";
+    arr.forEach(a=>{
+      if(!a || !a.id || !/^\d{2}:\d{2}$/.test(a.time || "")) return;
+      if(dismissed.indexOf(a.id) >= 0) return;
+      if(events.some(e => e.id === a.id)) return;
+      const sound = SOUNDS[a.sound] ? a.sound : "fanfare";
+      let days = null;
+      if(Array.isArray(a.days)){
+        days = a.days.filter(function(d){ return typeof d === "number" && d >= 0 && d <= 6; });
+        if(!days.length) days = null;
+      }
+      const ev = {id:String(a.id), name:String(a.name || "Нова подія"), time:a.time, emoji:String(a.emoji || "⏰"), sound:sound};
+      if(days) ev.days = days;
+      if(a.enabled === false) ev.enabled = false;
+      events.push(ev);
+      added++; lastName = String(a.name || "");
+    });
+    if(added || retiredChanged){
+      events.sort((a,b)=> a.time < b.time ? -1 : 1);
+      save(); renderList();
+      if(added) toast(added === 1 ? "✨ Lola додала: " + lastName : "✨ Lola додала " + added + " будильники!");
+    }
   }catch(e){}
-  factList = FALLBACK_FACTS;
-  return factList;
 }
+
 /* ---------- Photo slideshow (left panel, wide screens) ---------- */
 const DEFAULT_PHOTOS = ["cover.jpg","photos/p1.jpg","photos/p2.jpg","photos/p3.jpg",
                         "photos/p4.jpg","photos/p5.jpg","photos/p6.jpg","photos/p7.jpg","photos/p8.jpg"];
 const HIDE_KEY = "kidsRoutine.hiddenPhotos.v1";
+const CPHOTO_KEY = "kidsRoutine.customPhotos.v1";
 const SINT_KEY = "kidsRoutine.slideSec.v1";
 function hiddenPhotos(){
   try{ const a = JSON.parse(localStorage.getItem(HIDE_KEY) || "[]"); return Array.isArray(a) ? a : []; }catch(e){ return []; }
@@ -1435,7 +1463,7 @@ function slideList(){
 }
 const PAUSE_KEY = "kidsRoutine.slidePaused.v1";
 const ICON_PAUSE = '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.6"/><rect x="14" y="5" width="4" height="14" rx="1.6"/></svg>';
-const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.53.85l10.2-6.5a1 1 0 0 0 1.7L9.53 4.65A1 1 0 0 0 8 5.5z"/></svg>';
+const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.53.85l10.2-6.5a1 1 0 0 0 0-1.7L9.53 4.65A1 1 0 0 0 8 5.5z"/></svg>';
 function slidePaused(){ try{ return localStorage.getItem(PAUSE_KEY) === "1"; }catch(e){ return false; } }
 let slideArmed = false; // v25: slideshow never autostarts on open — only via the play button
 function effectiveSec(){ const s = slideSec(); return (slideArmed && s > 0 && !slidePaused()) ? s : 0; }
