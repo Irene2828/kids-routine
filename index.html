@@ -391,7 +391,7 @@
   <button id="gearBtn" title="Розклад">☰</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 32 • 23.09.2026</div>
+  <div id="verChip">версія 33 • 23.09.2026</div>
 </div>
 <div id="app">
 <header>
@@ -411,7 +411,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 32 • 23.09.2026</div>
+<div class="ver">версія 33 • 23.09.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -500,7 +500,7 @@ function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(events)); }cat
    версію index.html; якщо новіша — показує тост «✨ Є оновлення» з кнопкою
    «Оновити» (location.reload). Вирішує проблему заморожених iOS web clip:
    перезберігати іконку більше не треба. */
-const APP_VER = 32;
+const APP_VER = 33;
 let updToastShown = false, lastUpdCheck = 0;
 function checkForUpdate(){
   const now = Date.now();
@@ -1291,14 +1291,14 @@ function dismissedIds(){
   try{ const a = JSON.parse(localStorage.getItem(DISMISS_KEY) || "[]"); return Array.isArray(a) ? a : []; }catch(e){ return []; }
 }
 function rememberDismissed(id){
-  try{ const a = dismissedIds(); if(a.indexOf(id) < 0){ a.push(id); localStorage.setItem(DISMISS_KEY, JSON.stringify(a)); } }catch(e){}
+  try{ const a = dismissedIds(); if(a.indexOf(id) < 0){ a.push(id); localStorage.setItem(DISMISS_KEY, JSON.stringify(a)); }catch(e){} }
 }
 function toast(msg){
   let t = document.getElementById("toast");
   if(!t){
     t = document.createElement("div");
     t.id = "toast";
-    t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#3a2e2e;color:#fff;padding:12px 20px;border-radius:999px;font-size:15px;font-weight:700;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .3s;max-width:90vw;text-align:center;";
+    t.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#3a2e2e;color:#fff;padding:10px 10px 10px 18px;border-radius:999px;font-size:15px;font-weight:700;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .3s;max-width:90vw;text-align:center;";
     document.body.appendChild(t);
   }
   t.textContent = msg;
@@ -1391,12 +1391,12 @@ function renderSlideToggle(){
   b.setAttribute("aria-label", running ? "Зупинити слайдшоу" : "Запустити слайдшоу");
   renderStageClock();
 }
-/* ---------- Waiting-mode live clock (v17, v32: always visible) ----------
-   White Tahoe-style clock over the stage, always on — nothing fades on its
-   own. Hidden only while an alarm is ringing. */
+/* ---------- Waiting-mode live clock (v17) ----------
+   White Tahoe-style clock over the autumn cover, shown only when the
+   slideshow is paused and no alarm is ringing. */
 function stageClockVisible(){
   const alarmOn = $("alarm") && $("alarm").classList.contains("show");
-  return !alarmOn;
+  return !alarmOn && effectiveSec() === 0;
 }
 function renderStageClock(){
   const el = $("clockOverlay"); if(!el) return;
