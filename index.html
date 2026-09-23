@@ -91,6 +91,89 @@
   }
   #gearBtn:active{transform:scale(.93);}
   #gearBtn svg{display:block;}
+  /* v23: stage icon buttons (calendar + school), left under ticker, opposite menu */
+  .stageIcon{
+    position:absolute; top:calc(env(safe-area-inset-top) + 66px); z-index:10;
+    width:46px; height:46px; border:none; border-radius:50%; cursor:pointer;
+    background:rgba(20,20,22,.45); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+    font-size:22px; line-height:1; color:#fff; padding:0;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 16px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .stageIcon:active{transform:scale(.93);}
+  #calBtn{left:14px;}
+  #schoolBtn{left:70px;}
+  /* v23: calendar / school modal, app style (below alarm overlay) */
+  #calModal{
+    position:fixed; inset:0; z-index:40; display:none;
+    align-items:center; justify-content:center; padding:20px;
+    background:rgba(0,0,0,.55);
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  }
+  #calModal.show{display:flex;}
+  #calCard{
+    width:100%; max-width:430px; max-height:86vh; overflow:hidden;
+    display:flex; flex-direction:column;
+    background:rgba(26,26,31,.96); border-radius:28px;
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 24px 70px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.12);
+    color:#fff;
+  }
+  #calHead{display:flex; align-items:center; gap:8px; padding:16px 16px 10px; flex:none;}
+  #calTitle{font-family:ui-rounded,"SF Pro Rounded","Nunito",system-ui,sans-serif;
+    font-size:22px; font-weight:700; flex:1;}
+  #calAdd,#calX{
+    width:40px; height:40px; border-radius:50%; border:none; cursor:pointer; flex:none;
+    font-size:22px; line-height:1; padding:0;
+  }
+  #calAdd{background:#ff9f1c; color:#1a1a1e; font-weight:700;}
+  #calAdd:active{transform:scale(.92);}
+  #calX{background:rgba(255,255,255,.12); color:#fff;}
+  #calBody{overflow-y:auto; -webkit-overflow-scrolling:touch; padding:2px 16px 18px; min-height:0;}
+  #calNav{display:flex; align-items:center; justify-content:space-between; margin:2px 0 8px;}
+  #calNav .mname{font-size:18px; font-weight:700;}
+  #calNav button,#sclNav button{width:36px; height:36px; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(255,255,255,.1); color:#fff; font-size:18px; flex:none;}
+  #calGrid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
+  .cdow{text-align:center; font-size:12px; font-weight:700; color:#a1a1a6; padding:6px 0;}
+  .cday{
+    aspect-ratio:1; min-height:44px; border:none; border-radius:14px; background:transparent; color:#fff;
+    font-size:16px; font-weight:600; cursor:pointer; position:relative; padding:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .cday.dim{opacity:.25;}
+  .cday.today{box-shadow:inset 0 0 0 2px #ff9f1c;}
+  .cday.sel{background:#ff9f1c; color:#1a1a1e;}
+  .cday .dot{position:absolute; bottom:5px; left:50%; transform:translateX(-50%);
+    width:5px; height:5px; border-radius:50%; background:#ff9f1c;}
+  .cday.sel .dot{background:#1a1a1e;}
+  .cday .bmk{position:absolute; top:2px; right:4px; font-size:11px;}
+  #calEvTitle{font-size:15px; font-weight:700; color:#ffcf8a; margin:14px 0 6px;}
+  .cev{display:flex; align-items:center; gap:10px; padding:10px 12px; margin:8px 0;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.09); border-radius:18px;}
+  .ce-emo{font-size:26px; cursor:pointer; flex:none;}
+  .ce-main{flex:1; min-width:0;}
+  .ce-name{font-size:16px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer;}
+  .ce-date{font-size:13px; color:#a1a1a6; margin-top:2px; cursor:pointer; font-variant-numeric:tabular-nums;}
+  .ce-rep{flex:none; border:1px solid rgba(255,255,255,.2); background:transparent; color:#fff;
+    border-radius:999px; font-size:12px; font-weight:700; padding:6px 10px; cursor:pointer;}
+  .ce-rep.on{background:rgba(255,159,28,.2); border-color:#ff9f1c; color:#ffcf8a;}
+  .ce-del{flex:none; border:none; background:rgba(255,255,255,.1); color:#fff;
+    width:32px; height:32px; border-radius:50%; font-size:15px; cursor:pointer;}
+  .ce-empty{text-align:center; color:#a1a1a6; font-size:14px; padding:18px 0 6px; line-height:1.5;}
+  .ce-hint{font-size:12px; color:#a1a1a6; margin:10px 0 0; line-height:1.5;}
+  #sclNav{display:flex; align-items:center; justify-content:space-between; margin:2px 0 10px;}
+  #sclNav .dname{font-size:18px; font-weight:700; text-align:center;}
+  #sclNav .dsub{font-size:13px; color:#a1a1a6; text-align:center; margin-top:2px;}
+  .scl{display:flex; align-items:center; gap:12px; padding:12px 14px; margin:8px 0;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.09); border-radius:18px;}
+  .scl.now{background:rgba(255,159,28,.14); border-color:rgba(255,159,28,.55);}
+  .scl .t{font-size:13px; font-weight:700; color:#ffcf8a; width:88px; flex:none; font-variant-numeric:tabular-nums;}
+  .scl .e{font-size:26px; flex:none;}
+  .scl .n{font-size:16px; font-weight:600; flex:1;}
+  .scl .nowtag{font-size:11px; font-weight:800; background:#ff9f1c; color:#1a1a1e;
+    border-radius:999px; padding:3px 9px; flex:none;}
   /* v19: weather ticker — Apple glass, news-style, edge to edge */
   #ticker{
     position:absolute; top:0; left:0; right:0; z-index:4; overflow:hidden;
@@ -302,7 +385,9 @@
   <div id="clockOverlay"><div id="clockTime">--:--:--</div><div id="clockDate"></div><div id="countdowns"></div></div>
   <button id="slideToggle" aria-label="Зупинити слайдшоу"></button>
   <button id="gearBtn" title="Розклад">☰</button>
-  <div id="verChip">версія 22 • 23.09.2026</div>
+  <button id="calBtn" class="stageIcon" title="Календар">📅</button>
+  <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
+  <div id="verChip">версія 23 • 23.09.2026</div>
 </div>
 <div id="app">
 <header>
@@ -322,8 +407,19 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 22 • 23.09.2026</div>
+<div class="ver">версія 23 • 23.09.2026</div>
 </div><!-- /app -->
+
+<div id="calModal">
+  <div id="calCard">
+    <div id="calHead">
+      <div id="calTitle">📅 Календар</div>
+      <button id="calAdd" title="Додати подію">+</button>
+      <button id="calX" title="Закрити">✕</button>
+    </div>
+    <div id="calBody"></div>
+  </div>
+</div>
 
 <div id="alarm">
   <div class="big" id="alarmEmo">☀️</div>
@@ -395,6 +491,265 @@ function load(){
   return JSON.parse(JSON.stringify(DEFAULT_EVENTS));
 }
 function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(events)); }catch(e){} }
+/* ---------- v23: Calendar + School ----------
+   📅 Calendar (stage, left under ticker): month grid in app style, tap a day
+   to see its events; add/edit/delete like alarms (+ in header, tap name/date
+   to edit, tap emoji to cycle, 🔁 toggles yearly). Birthdays of Марчик (30.09)
+   and Алек (01.10) are built-in yearly events — they also feed the screensaver
+   countdown chips, so editing a birthday date updates the chips too.
+   🏫 School: today's class schedule for the kids (from the photo), ‹ › to flip
+   days, the current lesson is highlighted. */
+const CAL_LS = "kidsCalV1";
+const CAL_EMO = ["✨","🎂","🎉","⚽","📚","🏫","🎭","🎵","🦷","✈️","🎁","❤️","⭐","🌙","☀️"];
+let calEvents = loadCal();
+function loadCal(){
+  try{
+    const raw = localStorage.getItem(CAL_LS);
+    if(raw){ const arr = JSON.parse(raw); if(Array.isArray(arr) && arr.length) return arr; }
+  }catch(e){}
+  return [
+    {id:"b-mark", name:"День народження Марчика", short:"Марчик", emoji:"🎂", y:2026, m:9, d:30, yearly:true, bday:true},
+    {id:"b-alex", name:"День народження Алека", short:"Алек", emoji:"🎂", y:2026, m:10, d:1, yearly:true, bday:true}
+  ];
+}
+function saveCal(){ try{ localStorage.setItem(CAL_LS, JSON.stringify(calEvents)); }catch(e){} }
+function evKey(y,m,d){ return y+"-"+m+"-"+d; }
+function calEventsOn(y,m,d){
+  return calEvents.filter(e => (e.yearly && e.m===m && e.d===d) || (!e.yearly && e.y===y && e.m===m && e.d===d));
+}
+/* Single source of truth for the screensaver countdown chips */
+function birthdayList(){
+  const list = calEvents.filter(e => e.bday && e.m && e.d)
+    .map(e => ({name: e.short || e.name, month: e.m, day: e.d}));
+  return list.length ? list : [{name:"Марчик", month:9, day:30}, {name:"Алек", month:10, day:1}];
+}
+const MON_UA = ["січень","лютий","березень","квітень","травень","червень","липень","серпень","вересень","жовтень","листопад","грудень"];
+const DOW_UA = ["неділя","понеділок","вівторок","середа","четвер","пʼятниця","субота"];
+let calMode = "calendar";
+let calVY = 0, calVM = 0, calSel = null;
+let sclDate = null;
+function openCalModal(mode){
+  calMode = mode;
+  const now = new Date();
+  if(mode === "calendar"){
+    calVY = now.getFullYear(); calVM = now.getMonth() + 1;
+    calSel = evKey(now.getFullYear(), now.getMonth()+1, now.getDate());
+    $("calTitle").textContent = "📅 Календар";
+    $("calAdd").style.display = "";
+  }else{
+    sclDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    $("calTitle").textContent = "🏫 Школа";
+    $("calAdd").style.display = "none";
+  }
+  renderCalBody();
+  $("calModal").classList.add("show");
+}
+function closeCalModal(){ $("calModal").classList.remove("show"); }
+$("calBtn").onclick = ()=> openCalModal("calendar");
+$("schoolBtn").onclick = ()=> openCalModal("school");
+$("calX").onclick = closeCalModal;
+$("calModal").addEventListener("click", e=>{ if(e.target === $("calModal")) closeCalModal(); });
+document.addEventListener("keydown", e=>{ if(e.key === "Escape" && $("calModal").classList.contains("show")) closeCalModal(); });
+$("calAdd").onclick = ()=>{
+  const p = calSel.split("-").map(Number);
+  const e = {id:"c"+Date.now(), name:"Нова подія", emoji:"✨", y:p[0], m:p[1], d:p[2], yearly:false};
+  calEvents.push(e); saveCal(); renderCalBody();
+  const row = document.querySelector('.cev[data-id="'+e.id+'"] .ce-name');
+  if(row) calInlineEdit(row, e.name, v=>{ v = v.trim(); if(v) e.name = v; saveCal(); renderCalBody(); });
+};
+function calInlineEdit(el, value, commit){
+  const input = document.createElement("input");
+  input.type = "text"; input.value = value; input.className = "sedit";
+  input.setAttribute("autocapitalize", "sentences");
+  el.replaceWith(input);
+  input.focus(); input.select();
+  let done = false;
+  function finish(ok){
+    if(done) return; done = true;
+    if(ok) commit(input.value); else renderCalBody();
+  }
+  input.addEventListener("blur", ()=> finish(true));
+  input.addEventListener("keydown", e=>{
+    if(e.key === "Enter"){ e.preventDefault(); input.blur(); }
+    else if(e.key === "Escape"){ finish(false); }
+  });
+}
+function inlineDateEdit(el, e){
+  const input = document.createElement("input");
+  input.type = "date";
+  const p = n => String(n).padStart(2,"0");
+  input.value = e.y + "-" + p(e.m) + "-" + p(e.d);
+  input.className = "sedit"; input.style.fontSize = "15px";
+  el.replaceWith(input);
+  input.focus();
+  let done = false;
+  function finish(ok){
+    if(done) return; done = true;
+    if(ok && input.value){
+      const parts = input.value.split("-").map(Number);
+      if(parts.length === 3 && parts[1] >= 1 && parts[1] <= 12 && parts[2] >= 1 && parts[2] <= 31){
+        e.y = parts[0]; e.m = parts[1]; e.d = parts[2];
+        saveCal();
+      }
+    }
+    renderCalBody();
+  }
+  input.addEventListener("change", ()=> finish(true));
+  input.addEventListener("blur", ()=> finish(true));
+  input.addEventListener("keydown", ev=>{ if(ev.key === "Escape") finish(false); });
+}
+function renderCalBody(){
+  const body = $("calBody");
+  if(calMode === "school"){ renderSchool(body); return; }
+  const y = calVY, m = calVM;
+  const first = new Date(y, m-1, 1);
+  const lead = (first.getDay() + 6) % 7; // Monday-first
+  const dim = new Date(y, m, 0).getDate();
+  const prevDim = new Date(y, m-1, 0).getDate();
+  const today = new Date();
+  const tKey = evKey(today.getFullYear(), today.getMonth()+1, today.getDate());
+  let cells = "";
+  ["Пн","Вт","Ср","Чт","Пт","Сб","Нд"].forEach(d=>{ cells += '<div class="cdow">'+d+'</div>'; });
+  for(let i = lead; i > 0; i--) cells += '<button class="cday dim" data-nav="-1">'+(prevDim - i + 1)+'</button>';
+  for(let d = 1; d <= dim; d++){
+    const k = evKey(y,m,d);
+    const evs = calEventsOn(y,m,d);
+    const cls = "cday" + (k===tKey ? " today" : "") + (k===calSel ? " sel" : "");
+    const dot = evs.length ? '<span class="dot"></span>' : "";
+    const bmk = evs.some(x=>x.bday) ? '<span class="bmk">🎂</span>' : "";
+    cells += '<button class="'+cls+'" data-day="'+d+'">'+d+dot+bmk+'</button>';
+  }
+  const tail = (7 - (lead + dim) % 7) % 7;
+  for(let d = 1; d <= tail; d++) cells += '<button class="cday dim" data-nav="1">'+d+'</button>';
+  const sp = calSel.split("-").map(Number);
+  const evs = calEventsOn(sp[0], sp[1], sp[2]);
+  const p2 = n => String(n).padStart(2,"0");
+  let evHtml = '<div id="calEvTitle">'+sp[2]+' '+MON_UA[sp[1]-1]+' • '+DOW_UA[new Date(sp[0],sp[1]-1,sp[2]).getDay()]+'</div>';
+  if(!evs.length) evHtml += '<div class="ce-empty">Поки порожньо — натисни + щоб додати ✨</div>';
+  evs.forEach(e=>{
+    const dateLbl = e.yearly ? (e.d+"."+p2(e.m)+" • щороку") : (e.d+"."+p2(e.m)+"."+e.y);
+    evHtml += '<div class="cev" data-id="'+e.id+'">'+
+      '<div class="ce-emo" title="Змінити іконку">'+escapeHtml(e.emoji||"✨")+'</div>'+
+      '<div class="ce-main"><div class="ce-name">'+escapeHtml(e.name)+'</div>'+
+      '<div class="ce-date" title="Змінити дату">'+escapeHtml(dateLbl)+'</div></div>'+
+      '<button class="ce-rep'+(e.yearly?" on":"")+'" title="Щороку / разово">🔁</button>'+
+      '<button class="ce-del" title="Видалити">✕</button></div>';
+  });
+  body.innerHTML =
+    '<div id="calNav"><button id="calPrev">‹</button><div class="mname">'+MON_UA[m-1]+' '+y+'</div><button id="calNext">›</button></div>'+
+    '<div id="calGrid">'+cells+'</div>'+ evHtml +
+    '<div class="ce-hint">Натисни на подію, щоб змінити назву чи дату. 🔁 — повторювати щороку.</div>';
+  $("calPrev").onclick = ()=>{ calVM--; if(calVM<1){calVM=12; calVY--;} renderCalBody(); };
+  $("calNext").onclick = ()=>{ calVM++; if(calVM>12){calVM=1; calVY++;} renderCalBody(); };
+  body.querySelectorAll(".cday[data-day]").forEach(b=>{
+    b.onclick = ()=>{ calSel = evKey(calVY, calVM, +b.dataset.day); renderCalBody(); };
+  });
+  body.querySelectorAll(".cday[data-nav]").forEach(b=>{
+    b.onclick = ()=>{ calVM += (+b.dataset.nav); if(calVM<1){calVM=12;calVY--;} if(calVM>12){calVM=1;calVY++;} renderCalBody(); };
+  });
+  body.querySelectorAll(".cev").forEach(row=>{
+    const e = calEvents.find(x=>x.id===row.dataset.id); if(!e) return;
+    row.querySelector(".ce-emo").onclick = ()=>{
+      const cur = e.emoji || "✨";
+      e.emoji = CAL_EMO[(CAL_EMO.indexOf(cur)+1) % CAL_EMO.length];
+      saveCal(); renderCalBody();
+    };
+    row.querySelector(".ce-name").onclick = ()=>{
+      calInlineEdit(row.querySelector(".ce-name"), e.name || "", v=>{
+        v = v.trim(); if(v) e.name = v; saveCal(); renderCalBody();
+      });
+    };
+    row.querySelector(".ce-date").onclick = ()=> inlineDateEdit(row.querySelector(".ce-date"), e);
+    row.querySelector(".ce-rep").onclick = ()=>{ e.yearly = !e.yearly; saveCal(); renderCalBody(); };
+    row.querySelector(".ce-del").onclick = ()=>{
+      calEvents = calEvents.filter(x=>x.id!==e.id); saveCal(); renderCalBody();
+    };
+  });
+}
+/* School schedule — Group 305, 2026–2027 (from the photo). 1=Mon..5=Fri */
+const SCHOOL = {
+  1: [
+    ["8:50–8:55","Класний час • Homeroom","🏫"],
+    ["8:55–9:55","Фізкультура • Phys Ed","⚽"],
+    ["9:55–10:55","Математика • Math","🔢"],
+    ["10:55–11:16","Перерва • Recess","🛝"],
+    ["11:16–12:16","Французька • Français","⚜️"],
+    ["12:16–13:31","Обід • Lunch","🍽️"],
+    ["13:31–14:31","Французька • Français","⚜️"],
+    ["14:31–14:52","Перерва • Recess","🛝"],
+    ["14:52–15:52","Англійська • English","📚"]
+  ],
+  2: [
+    ["8:50–8:55","Класний час • Homeroom","🏫"],
+    ["8:55–9:55","Математика • Math","🔢"],
+    ["9:55–10:55","Французька • Français","⚜️"],
+    ["10:55–11:16","Перерва • Recess","🛝"],
+    ["11:16–12:16","Французька • Français","⚜️"],
+    ["12:16–13:31","Обід • Lunch","🍽️"],
+    ["13:31–14:31","Англійська • English","📚"],
+    ["14:31–14:52","Перерва • Recess","🛝"],
+    ["14:52–15:52","Англійська • English","📚"]
+  ],
+  3: [
+    ["8:50–8:55","Класний час • Homeroom","🏫"],
+    ["8:55–9:55","Математика • Math","🔢"],
+    ["9:55–10:55","Англійська • English","📚"],
+    ["10:55–11:16","Перерва • Recess","🛝"],
+    ["11:16–12:16","Фізкультура • Phys Ed","⚽"],
+    ["12:16–13:31","Обід • Lunch","🍽️"],
+    ["13:31–14:31","Французька • Français","⚜️"],
+    ["14:31–14:52","Перерва • Recess","🛝"],
+    ["14:52–15:52","Французька • Français","⚜️"]
+  ],
+  4: [
+    ["8:50–8:55","Класний час • Homeroom","🏫"],
+    ["8:55–9:55","Французька • Français","⚜️"],
+    ["9:55–10:55","Музика • Music","🎵"],
+    ["10:55–11:16","Перерва • Recess","🛝"],
+    ["11:16–12:16","Математика • Math","🔢"],
+    ["12:16–13:31","Обід • Lunch","🍽️"],
+    ["13:31–14:31","Mme Ліана","👩‍🏫"],
+    ["14:31–14:52","Перерва • Recess","🛝"],
+    ["14:52–15:52","Французька • Français","⚜️"]
+  ],
+  5: [
+    ["8:50–8:55","Класний час • Homeroom","🏫"],
+    ["8:55–9:55","Французька • Français","⚜️"],
+    ["9:55–10:55","Французька • Français","⚜️"],
+    ["10:55–11:16","Перерва • Recess","🛝"],
+    ["11:16–12:16","Драма • Drama","🎭"],
+    ["12:16–13:31","Обід • Lunch","🍽️"],
+    ["13:31–14:31","Математика • Math","🔢"],
+    ["14:31–14:52","Перерва • Recess","🛝"],
+    ["14:52–15:52","Диктант • Spelling Test","✏️"]
+  ]
+};
+function renderSchool(body){
+  const d = sclDate, dow = d.getDay();
+  let html = '<div id="sclNav"><button id="sclPrev">‹</button>'+
+    '<div><div class="dname">'+DOW_UA[dow]+'</div>'+
+    '<div class="dsub">'+d.getDate()+' '+MON_UA[d.getMonth()]+'</div></div>'+
+    '<button id="sclNext">›</button></div>';
+  const lessons = SCHOOL[dow];
+  if(!lessons){
+    html += '<div class="ce-empty">Вихідні! Школи немає 🎉</div>';
+  }else{
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    const nowMin = now.getHours()*60 + now.getMinutes();
+    const tm = t => { const p = t.split(":"); return (+p[0])*60 + (+p[1]); };
+    lessons.forEach(L=>{
+      const r = L[0].split("–");
+      const isNow = isToday && nowMin >= tm(r[0]) && nowMin < tm(r[1]);
+      html += '<div class="scl'+(isNow?" now":"")+'"><div class="t">'+L[0]+'</div>'+
+        '<div class="e">'+L[2]+'</div><div class="n">'+escapeHtml(L[1])+'</div>'+
+        (isNow ? '<div class="nowtag">ЗАРАЗ</div>' : "")+'</div>';
+    });
+  }
+  body.innerHTML = html;
+  $("sclPrev").onclick = ()=>{ sclDate = new Date(d.getFullYear(), d.getMonth(), d.getDate()-1); renderCalBody(); };
+  $("sclNext").onclick = ()=>{ sclDate = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1); renderCalBody(); };
+}
 
 /* ---------- Audio: fun synthesized sounds ---------- */
 let AC = null;
@@ -986,12 +1341,9 @@ function renderStageClock(){
   $("clockDate").textContent = days[d.getDay()] + ", " + d.getDate() + " " + mon[d.getMonth()];
   renderCountdowns(d);
 }
-/* ---------- Birthday countdowns (v21) ----------
-   Two chips under the stage clock: Марчик — 30.09, Алек — 01.10. */
-const BIRTHDAYS = [
-  {name:"Марчик", month:9, day:30},
-  {name:"Алек", month:10, day:1}
-];
+/* ---------- Birthday countdowns (v23) ----------
+   Two cards under the stage clock; dates come from birthdayList() —
+   the calendar's yearly birthday events (single source of truth). */
 function daysUntil(month, day, now){
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   let t = new Date(now.getFullYear(), month - 1, day);
@@ -1005,7 +1357,7 @@ function pluralDays(n){
 }
 function renderCountdowns(d){
   const box = $("countdowns"); if(!box) return;
-  box.innerHTML = BIRTHDAYS.map(b => {
+  box.innerHTML = birthdayList().map(b => {
     const n = daysUntil(b.month, b.day, d);
     const label = n === 0 ? "З Днем народження!" : "залишилось " + n + " " + pluralDays(n);
     return '<div class="cd-card' + (n === 0 ? " today" : "") + '"><span class="cd-ico">🎉</span><span>' + b.name + " — " + label + "</span></div>";
