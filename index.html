@@ -75,7 +75,7 @@
   }
   .cd-card{
     display:flex; align-items:center; justify-content:center; gap:1.2vmin;
-    padding:1vmin 2.8vmin; border-radius:0;
+    padding:1vmin 2.8vmin; border-radius:22px;
     background:rgba(20,20,22,.42); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
     border:1px solid rgba(255,255,255,.16);
     box-shadow:0 8px 28px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.22);
@@ -391,7 +391,7 @@
   <button id="gearBtn" title="Розклад">☰</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 28 • 23.09.2026</div>
+  <div id="verChip">версія 29 • 23.09.2026</div>
 </div>
 <div id="app">
 <header>
@@ -411,7 +411,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 28 • 23.09.2026</div>
+<div class="ver">версія 29 • 23.09.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -1291,7 +1291,7 @@ function dismissedIds(){
   try{ const a = JSON.parse(localStorage.getItem(DISMISS_KEY) || "[]"); return Array.isArray(a) ? a : []; }catch(e){ return []; }
 }
 function rememberDismissed(id){
-  try{ const a = dismissedIds(); if(a.indexOf(id) < 0){ a.push(id); localStorage.setItem(DISMISS_KEY, JSON.stringify(a)); } }catch(e){}
+  try{ const a = dismissedIds(); if(a.indexOf(id) < 0){ a.push(id); localStorage.setItem(DISMISS_KEY, JSON.stringify(a)); }catch(e){} }
 }
 function toast(msg){
   let t = document.getElementById("toast");
@@ -1406,7 +1406,7 @@ function renderStageClock(){
   const d = new Date();
   const p = n => String(n).padStart(2, "0");
   $("clockTime").textContent = p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
-  const days = ["неділя","понеділок","вівторок","середа","четвер","п'ятниця","субота"];
+  const days = ["неділя","понеділок","вівторок","середа","четвер","пʼятниця","субота"];
   const mon = ["січня","лютого","березня","квітня","травня","червня","липня","серпня","вересня","жовтня","листопада","грудня"];
   $("clockDate").textContent = days[d.getDay()] + ", " + d.getDate() + " " + mon[d.getMonth()];
   renderCountdowns(d);
@@ -1420,17 +1420,12 @@ function daysUntil(month, day, now){
   if(t < startOfToday) t = new Date(now.getFullYear() + 1, month - 1, day);
   return Math.round((t - startOfToday) / 86400000);
 }
-function pluralDays(n){
-  if(n % 10 === 1 && n % 100 !== 11) return "день";
-  if(n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return "дні";
-  return "днів";
-}
 function renderCountdowns(d){
   const box = $("countdowns"); if(!box) return;
   box.innerHTML = birthdayList().map(b => {
     const n = daysUntil(b.month, b.day, d);
-    const label = n === 0 ? "З Днем народження!" : "залишилось " + n + " " + pluralDays(n);
-    return '<div class="cd-card' + (n === 0 ? " today" : "") + '"><span class="cd-ico">🎉</span><span>' + b.name + " — " + label + "</span></div>";
+    const label = n === 0 ? "сьогодні!" : n + "д";
+    return '<div class="cd-card' + (n === 0 ? " today" : "") + '"><span class="cd-ico">🎉</span><span>' + b.name + " ДН — " + label + "</span></div>";
   }).join("");
 }
 /* ---------- Photo stage (v16): fullscreen permanent background while waiting ----------
