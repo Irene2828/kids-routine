@@ -204,7 +204,7 @@
     font-size:11px; color:rgba(255,255,255,.55); text-shadow:0 1px 4px rgba(0,0,0,.5);
     pointer-events:none;
   }
-  /* ---------- Fact of the day (v36) ---------- */
+  /* ---------- Facts of the day (v38): morning always, midday from 12:00, evening from 20:00 ---------- */
   #factBtn{
     position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom) + 32px); z-index:11;
     width:46px; height:46px; border:none; border-radius:50%; cursor:pointer;
@@ -225,6 +225,10 @@
   #factCard.show{display:block;}
   #factCard .factTitle{font-weight:800; margin-bottom:6px; font-size:14px; color:#ffd60a;}
   #factCard .factTomorrow{margin-top:10px; font-size:12.5px; color:rgba(255,255,255,.65);}
+  #factCard .factSlot{margin-top:10px;}
+  #factCard .factSlot:first-child{margin-top:0;}
+  #factCard .slotTitle{font-weight:700; font-size:13px; color:#ffd60a; margin-bottom:2px;}
+  #factCard .factLocked{color:rgba(255,255,255,.5); font-size:13.5px;}
   header{width:100%; max-width:560px; text-align:center; padding:18px 8px 6px;}
   header h1{margin:0; font-size:30px; letter-spacing:.5px;}
   #clock{font-size:52px; font-weight:800; margin:6px 0 0; font-variant-numeric:tabular-nums;}
@@ -412,9 +416,9 @@
   <button id="gearBtn" title="Розклад">☰</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 36 • 23.09.2026</div>
-  <button id="factBtn" title="Факт дня">💡</button>
-  <div id="factCard"><div class="factTitle">Дивовижний факт дня 💡</div><div id="factText"></div><div class="factTomorrow">До завтра — буде новий факт!</div></div>
+  <div id="verChip">версія 38 • 25.09.2026</div>
+  <button id="factBtn" title="Факти дня">💡</button>
+  <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
 <div id="app">
 <header>
@@ -1347,7 +1351,7 @@ function applyRetired(ids){
   if(changed){ try{ localStorage.setItem(DISMISS_KEY, JSON.stringify(dis)); }catch(e){} }
   return changed;
 }
-/* ---------- Fact of the day (v36) ---------- */
+/* ---------- Facts of the day (v38): morning always, midday from 12:00, evening from 20:00 ---------- */
 const FACTS_URL = "https://raw.githubusercontent.com/Irene2828/kids-routine/main/facts.json";
 const FALLBACK_FACTS = [
 "Восьминіг має три серця — і блакитну кров!",
@@ -1395,11 +1399,36 @@ async function ensureFacts(){
   factList = FALLBACK_FACTS;
   return factList;
 }
+/* slot: 0 = morning (index unchanged), 1 = midday (from 12:00), 2 = evening (from 20:00) */
+function factSlotIndex(n, slot){
+  var i = factDayIndex(n);
+  if(slot === 0) return i;
+  return (i + slot * 9) % n;
+}
+function factSlotsUnlocked(){
+  var h = new Date().getHours();
+  return [true, h >= 12, h >= 20];
+}
 async function toggleFact(){
   const card = $("factCard");
   if(card.classList.contains("show")){ card.classList.remove("show"); return; }
   const list = await ensureFacts();
-  $("factText").textContent = list[factDayIndex(list.length)];
+  const n = list.length;
+  const unlocked = factSlotsUnlocked();
+  const slots = [
+    {icon:"🌅", name:"Ранковий факт", at:""},
+    {icon:"☀️", name:"Обідній факт", at:"12:00"},
+    {icon:"🌙", name:"Вечірній факт", at:"20:00"}
+  ];
+  let html = "";
+  for(let k = 0; k < 3; k++){
+    if(unlocked[k]){
+      html += '<div class="factSlot"><div class="slotTitle">' + slots[k].icon + ' ' + slots[k].name + '</div><div>' + escapeHtml(list[factSlotIndex(n, k)]) + '</div></div>';
+    }else{
+      html += '<div class="factSlot factLocked">' + slots[k].icon + ' ' + slots[k].name + ' відкриється о ' + slots[k].at + ' 🔒</div>';
+    }
+  }
+  $("factSlots").innerHTML = html;
   card.classList.add("show");
 }
 $("factBtn").addEventListener("click", function(){ toggleFact(); });
