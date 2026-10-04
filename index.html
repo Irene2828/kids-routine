@@ -416,7 +416,7 @@
   <button id="gearBtn" title="Розклад">☰</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 38 • 25.09.2026</div>
+  <div id="verChip">версія 39 • 04.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
@@ -438,7 +438,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 38 • 25.09.2026</div>
+<div class="ver">версія 39 • 04.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -527,7 +527,7 @@ function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(events)); }cat
    версію index.html; якщо новіша — показує тост «✨ Є оновлення» з кнопкою
    «Оновити» (location.reload). Вирішує проблему заморожених iOS web clip:
    перезберігати іконку більше не треба. */
-const APP_VER = 36;
+const APP_VER = 39;
 let updToastShown = false, lastUpdCheck = 0;
 function checkForUpdate(){
   const now = Date.now();
@@ -1504,9 +1504,6 @@ function daysUntil(month, day, now){
 function renderCountdowns(d){
   const box = $("countdowns"); if(!box) return;
   const cards = [];
-  birthdayList().forEach(b => {
-    cards.push({ico:"🎉", text: b.name + " ДН", n: daysUntil(b.month, b.day, d)});
-  });
   cards.push({ico:"🎃", text:"Хеллоуїн", n: daysUntil(10, 31, d)});
   const startOfToday = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const lpT = new Date(2026, 11, 12);
