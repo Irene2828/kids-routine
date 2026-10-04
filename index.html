@@ -1491,9 +1491,10 @@ function renderStageClock(){
   $("clockDate").textContent = days[d.getDay()] + ", " + d.getDate() + " " + mon[d.getMonth()];
   renderCountdowns(d);
 }
-/* ---------- Birthday countdowns (v23) ----------
-   Two cards under the stage clock; dates come from birthdayList() —
-   the calendar's yearly birthday events (single source of truth). */
+/* ---------- Event countdowns (v38) ----------
+   Cards under the stage clock: birthdays from birthdayList() + built-in
+   event cards. Halloween is yearly; the Las Palmas trip is one-time
+   (2026-12-12) and drops off automatically once past. */
 function daysUntil(month, day, now){
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   let t = new Date(now.getFullYear(), month - 1, day);
@@ -1502,10 +1503,19 @@ function daysUntil(month, day, now){
 }
 function renderCountdowns(d){
   const box = $("countdowns"); if(!box) return;
-  box.innerHTML = birthdayList().map(b => {
-    const n = daysUntil(b.month, b.day, d);
-    const label = n === 0 ? "сьогодні!" : n + "д";
-    return '<div class="cd-card' + (n === 0 ? " today" : "") + '"><span class="cd-ico">🎉</span><span>' + b.name + " ДН — " + label + "</span></div>";
+  const cards = [];
+  birthdayList().forEach(b => {
+    cards.push({ico:"🎉", text: b.name + " ДН", n: daysUntil(b.month, b.day, d)});
+  });
+  cards.push({ico:"🎃", text:"Хеллоуїн", n: daysUntil(10, 31, d)});
+  const startOfToday = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const lpT = new Date(2026, 11, 12);
+  if(lpT >= startOfToday){
+    cards.push({ico:"✈️", text:"Лас-Пальмас", n: Math.round((lpT - startOfToday) / 86400000)});
+  }
+  box.innerHTML = cards.map(c => {
+    const label = c.n === 0 ? "сьогодні!" : c.n + "д";
+    return '<div class="cd-card' + (c.n === 0 ? " today" : "") + '"><span class="cd-ico">' + c.ico + "</span><span>" + c.text + " — " + label + "</span></div>";
   }).join("");
 }
 /* ---------- Photo stage (v16): fullscreen permanent background while waiting ----------
