@@ -68,10 +68,10 @@
   /* v22: birthday countdowns — wide Apple-radius cards under the clock
      v26: stacked on the right side of the stage, slimmer, text 2px smaller
      v27: bottom-right corner, thin elegant text
-     v28: countdown cards square, no border radius */
+     v28: countdown cards square, no border radius
+     v40: back under the clock, centered (Iryna 04.10.2026) */
   #countdowns{
-    position:absolute; right:4vmin; bottom:4vmin;
-    margin-top:0; display:flex; flex-direction:column; gap:1.6vmin; align-items:stretch;
+    margin-top:2.4vmin; display:flex; flex-direction:column; gap:1.6vmin; align-items:center;
   }
   .cd-card{
     display:flex; align-items:center; justify-content:center; gap:1.2vmin;
@@ -416,7 +416,7 @@
   <button id="gearBtn" title="Розклад">☰</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 39 • 04.10.2026</div>
+  <div id="verChip">версія 40 • 04.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
@@ -438,7 +438,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 39 • 04.10.2026</div>
+<div class="ver">версія 40 • 04.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -527,7 +527,7 @@ function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(events)); }cat
    версію index.html; якщо новіша — показує тост «✨ Є оновлення» з кнопкою
    «Оновити» (location.reload). Вирішує проблему заморожених iOS web clip:
    перезберігати іконку більше не треба. */
-const APP_VER = 39;
+const APP_VER = 40;
 let updToastShown = false, lastUpdCheck = 0;
 function checkForUpdate(){
   const now = Date.now();
