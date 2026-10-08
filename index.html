@@ -70,21 +70,22 @@
      v27: bottom-right corner, thin elegant text
      v28: countdown cards square, no border radius
      v40: back under the clock, centered (Iryna 04.10.2026)
-     v41: bottom-right corner again, mirrored opposite the 💡 button (Iryna 07.10.2026) */
+     v41: bottom-right corner again, mirrored opposite the 💡 button (Iryna 07.10.2026)
+     v42: smaller cards — 4 countdowns stack (Halloween, Las Palmas + 2 birthdays, son's request 07.10.2026) */
   #countdowns{
     position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom) + 32px); z-index:3;
-    display:flex; flex-direction:column; gap:1.6vmin; align-items:flex-end;
+    display:flex; flex-direction:column; gap:1.2vmin; align-items:flex-end;
   }
   .cd-card{
-    display:flex; align-items:center; justify-content:center; gap:1.2vmin;
-    padding:1vmin 2.8vmin; border-radius:22px;
+    display:flex; align-items:center; justify-content:center; gap:1vmin;
+    padding:0.7vmin 2vmin; border-radius:18px;
     background:rgba(20,20,22,.42); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
     border:1px solid rgba(255,255,255,.16);
     box-shadow:0 8px 28px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.22);
-    color:#fff; font-size:calc(3.2vmin - 2px); font-weight:300; letter-spacing:.04em;
+    color:#fff; font-size:calc(2.6vmin - 2px); font-weight:300; letter-spacing:.04em;
     text-shadow:0 1px 8px rgba(0,0,0,.45); white-space:nowrap;
   }
-  .cd-card .cd-ico{font-size:3.8vmin; line-height:1;}
+  .cd-card .cd-ico{font-size:3vmin; line-height:1;}
   .cd-card.today{background:linear-gradient(135deg, rgba(230,126,34,.8), rgba(211,84,0,.8)); border-color:rgba(255,255,255,.28);}
   #gearBtn{
     position:absolute; top:calc(env(safe-area-inset-top) + 66px); right:14px; z-index:10;
@@ -418,7 +419,7 @@
   <button id="gearBtn" title="Розклад">☰</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 41 • 07.10.2026</div>
+  <div id="verChip">версія 42 • 07.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
@@ -440,7 +441,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 41 • 07.10.2026</div>
+<div class="ver">версія 42 • 07.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -1494,10 +1495,11 @@ function renderStageClock(){
   $("clockDate").textContent = days[d.getDay()] + ", " + d.getDate() + " " + mon[d.getMonth()];
   renderCountdowns(d);
 }
-/* ---------- Event countdowns (v38) ----------
+/* ---------- Event countdowns (v38, v42: +birthdays back) ----------
    Cards under the stage clock: birthdays from birthdayList() + built-in
    event cards. Halloween is yearly; the Las Palmas trip is one-time
-   (2026-12-12) and drops off automatically once past. */
+   (2026-12-12) and drops off automatically once past. Birthdays re-added
+   07.10.2026 at the son's request (were removed earlier at Iryna's). */
 function daysUntil(month, day, now){
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   let t = new Date(now.getFullYear(), month - 1, day);
@@ -1513,6 +1515,9 @@ function renderCountdowns(d){
   if(lpT >= startOfToday){
     cards.push({ico:"✈️", text:"Лас-Пальмас", n: Math.round((lpT - startOfToday) / 86400000)});
   }
+  birthdayList().forEach(b => {
+    cards.push({ico:"🎂", text:b.name, n: daysUntil(b.month, b.day, d)});
+  });
   box.innerHTML = cards.map(c => {
     const label = c.n === 0 ? "сьогодні!" : c.n + "д";
     return '<div class="cd-card' + (c.n === 0 ? " today" : "") + '"><span class="cd-ico">' + c.ico + "</span><span>" + c.text + " — " + label + "</span></div>";
