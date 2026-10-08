@@ -69,9 +69,11 @@
      v26: stacked on the right side of the stage, slimmer, text 2px smaller
      v27: bottom-right corner, thin elegant text
      v28: countdown cards square, no border radius
-     v40: back under the clock, centered (Iryna 04.10.2026) */
+     v40: back under the clock, centered (Iryna 04.10.2026)
+     v41: bottom-right corner again, mirrored opposite the 💡 button (Iryna 07.10.2026) */
   #countdowns{
-    margin-top:2.4vmin; display:flex; flex-direction:column; gap:1.6vmin; align-items:center;
+    position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom) + 32px); z-index:3;
+    display:flex; flex-direction:column; gap:1.6vmin; align-items:flex-end;
   }
   .cd-card{
     display:flex; align-items:center; justify-content:center; gap:1.2vmin;
@@ -416,7 +418,7 @@
   <button id="gearBtn" title="Розклад">☰</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 40 • 04.10.2026</div>
+  <div id="verChip">версія 41 • 07.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
@@ -438,7 +440,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 40 • 04.10.2026</div>
+<div class="ver">версія 41 • 07.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -1368,7 +1370,8 @@ async function ensureFacts(){
   factList = FALLBACK_FACTS;
   return factList;
 }
-/* slot: 0 = morning, 1 = midday (from 12:00), 2 = evening (from 20:00). NEVER-REPEAT scheme: every calendar day gets the next disjoint triple (3*day+slot) % n, counting days from 2026-10-04. New facts are always APPENDED at the end of the list, never prepended, so old indices never shift. While n > 3*day the modulo never wraps, so no fact is ever shown twice. */
+/* slot: 0 = morning, 1 = midday (from 12:00), 2 = evening (from 20:00). NEVER-REPEAT scheme: every calendar day gets the next disjoint triple (3*day+slot) % n, counting days from 2026-10-04. New facts are always APPENDED at the end of the list, never prepended, so old indices never shift. While n > 3*day the modulo never wraps, so no fact is ever shown twice.
+   2026-10-07 one-time topic interleave: facts.json was reordered ONCE so each day's triple spans 3 different topics (before: adjacent triples shared one topic block, e.g. days of pure space). Positions 0-11 were left untouched (already shown 04-07.10, must never repeat); positions 12+ were round-robin interleaved across 12 topic blocks in sub-blocks of <=6. The no-repeat guarantee is unaffected: shown indices remain strictly increasing. */
 function factSlotIndex(n, slot){
   return (factDayCount() * 3 + slot) % n;
 }
