@@ -71,7 +71,8 @@
      v28: countdown cards square, no border radius
      v40: back under the clock, centered (Iryna 04.10.2026)
      v41: bottom-right corner again, mirrored opposite the 💡 button (Iryna 07.10.2026)
-     v42: smaller cards — 4 countdowns stack (Halloween, Las Palmas + 2 birthdays, son's request 07.10.2026) */
+     v42: smaller cards — 4 countdowns stack (Halloween, Las Palmas + 2 birthdays, son's request 07.10.2026)
+     v43: 2 cards at a time, rotate every 5s; white SVG icons (Iryna 09.10.2026) */
   #countdowns{
     position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom) + 32px); z-index:3;
     display:flex; flex-direction:column; gap:1.2vmin; align-items:flex-end;
@@ -111,6 +112,36 @@
   .stageIcon:active{transform:scale(.93);}
   #calBtn{left:14px;}
   #schoolBtn{left:70px;}
+  #foodBtn{right:70px;}
+  /* v43: food widget modal (MealPlannerDaily as a widget) */
+  #foodModal{
+    position:fixed; inset:0; z-index:40; display:none;
+    align-items:center; justify-content:center; padding:20px;
+    background:rgba(0,0,0,.55);
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  }
+  #foodModal.show{display:flex;}
+  #foodCard{
+    width:100%; max-width:520px; height:86vh; max-height:800px;
+    display:flex; flex-direction:column; overflow:hidden;
+    background:rgba(26,26,31,.96); border-radius:28px;
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 24px 70px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.12);
+    color:#fff;
+  }
+  #foodHead{display:flex; align-items:center; gap:8px; padding:16px 16px 10px; flex:none;}
+  #foodTitle{font-family:ui-rounded,"SF Pro Rounded","Nunito",system-ui,sans-serif;
+    font-size:22px; font-weight:700; flex:1;}
+  #foodX{
+    width:40px; height:40px; border-radius:50%; border:none; cursor:pointer; flex:none;
+    font-size:22px; line-height:1; padding:0;
+    background:rgba(255,255,255,.12); color:#fff;
+  }
+  #foodX:active{transform:scale(.92);}
+  #foodBody{flex:1; min-height:0; padding:0 12px 12px;}
+  #foodFrame{width:100%; height:100%; border:none; border-radius:18px; background:#fff;}
+  /* v43: countdown icons are white SVG, not emoji */
+  .cd-card .cd-ico svg{width:3vmin; height:3vmin; display:block;}
   /* v23: calendar / school modal, app style (below alarm overlay) */
   #calModal{
     position:fixed; inset:0; z-index:40; display:none;
@@ -417,9 +448,10 @@
   <div id="clockOverlay"><div id="clockTime">--:--:--</div><div id="clockDate"></div><div id="countdowns"></div></div>
   <button id="slideToggle" aria-label="Зупинити слайдшоу"></button>
   <button id="gearBtn" title="Розклад">☰</button>
+  <button id="foodBtn" class="stageIcon" title="Меню">🍽️</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 42 • 07.10.2026</div>
+  <div id="verChip">версія 43 • 09.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
@@ -441,7 +473,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 42 • 07.10.2026</div>
+<div class="ver">версія 43 • 09.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -452,6 +484,16 @@
       <button id="calX" title="Закрити">✕</button>
     </div>
     <div id="calBody"></div>
+  </div>
+</div>
+
+<div id="foodModal">
+  <div id="foodCard">
+    <div id="foodHead">
+      <div id="foodTitle">🍽️ Меню дня</div>
+      <button id="foodX" title="Закрити">✕</button>
+    </div>
+    <div id="foodBody"><iframe id="foodFrame" src="https://meal-planner-daily.vercel.app" title="Меню дня"></iframe></div>
   </div>
 </div>
 
@@ -625,6 +667,15 @@ document.getElementById("schoolBtn").onclick = ()=> openCalModal("school");
 document.getElementById("calX").onclick = closeCalModal;
 document.getElementById("calModal").addEventListener("click", e=>{ if(e.target === document.getElementById("calModal")) closeCalModal(); });
 document.addEventListener("keydown", e=>{ if(e.key === "Escape" && document.getElementById("calModal").classList.contains("show")) closeCalModal(); });
+/* ---------- Food widget (v43): MealPlannerDaily as a widget ----------
+   Tap the 🍽️ icon (left of the schedule icon): the family day-menu app
+   opens in a modal widget. */
+function openFoodModal(){ document.getElementById("foodModal").classList.add("show"); }
+function closeFoodModal(){ document.getElementById("foodModal").classList.remove("show"); }
+document.getElementById("foodBtn").onclick = openFoodModal;
+document.getElementById("foodX").onclick = closeFoodModal;
+document.getElementById("foodModal").addEventListener("click", e=>{ if(e.target === document.getElementById("foodModal")) closeFoodModal(); });
+document.addEventListener("keydown", e=>{ if(e.key === "Escape" && document.getElementById("foodModal").classList.contains("show")) closeFoodModal(); });
 document.getElementById("calAdd").onclick = ()=>{
   const p = calSel.split("-").map(Number);
   const e = {id:"c"+Date.now(), name:"Нова подія", emoji:"✨", y:p[0], m:p[1], d:p[2], yearly:false};
@@ -1495,30 +1546,40 @@ function renderStageClock(){
   $("clockDate").textContent = days[d.getDay()] + ", " + d.getDate() + " " + mon[d.getMonth()];
   renderCountdowns(d);
 }
-/* ---------- Event countdowns (v38, v42: +birthdays back) ----------
+/* ---------- Event countdowns (v38, v42: +birthdays back, v43: white icons, 2-up rotation) ----------
    Cards under the stage clock: birthdays from birthdayList() + built-in
    event cards. Halloween is yearly; the Las Palmas trip is one-time
    (2026-12-12) and drops off automatically once past. Birthdays re-added
-   07.10.2026 at the son's request (were removed earlier at Iryna's). */
+   07.10.2026 at the son's request (were removed earlier at Iryna's).
+   v43 (09.10.2026, Iryna): icons are white SVG (not generic emoji);
+   shows 2 cards at a time, rotating every 5 seconds. */
 function daysUntil(month, day, now){
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   let t = new Date(now.getFullYear(), month - 1, day);
   if(t < startOfToday) t = new Date(now.getFullYear() + 1, month - 1, day);
   return Math.round((t - startOfToday) / 86400000);
 }
+/* White icons for countdown cards (v43) */
+const ICO_PUMPKIN = '<svg viewBox="0 0 24 24" fill="#fff"><ellipse cx="12" cy="14" rx="8" ry="6.5"/><rect x="11" y="4" width="2.4" height="5" rx="1.2"/></svg>';
+const ICO_PLANE = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>';
+const ICO_CAKE = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M4 12h16v8H4z"/><path d="M9 5h2v5H9zM13 5h2v5h-2z"/><circle cx="10" cy="3.4" r="1.1"/><circle cx="14" cy="3.4" r="1.1"/></svg>';
 function renderCountdowns(d){
   const box = $("countdowns"); if(!box) return;
   const cards = [];
-  cards.push({ico:"🎃", text:"Хеллоуїн", n: daysUntil(10, 31, d)});
+  cards.push({ico:ICO_PUMPKIN, text:"Хеллоуїн", n: daysUntil(10, 31, d)});
   const startOfToday = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const lpT = new Date(2026, 11, 12);
   if(lpT >= startOfToday){
-    cards.push({ico:"✈️", text:"Лас-Пальмас", n: Math.round((lpT - startOfToday) / 86400000)});
+    cards.push({ico:ICO_PLANE, text:"Лас-Пальмас", n: Math.round((lpT - startOfToday) / 86400000)});
   }
   birthdayList().forEach(b => {
-    cards.push({ico:"🎂", text:b.name, n: daysUntil(b.month, b.day, d)});
+    cards.push({ico:ICO_CAKE, text:b.name, n: daysUntil(b.month, b.day, d)});
   });
-  box.innerHTML = cards.map(c => {
+  /* v43: 2 cards at a time, rotate every 5 seconds */
+  const pages = Math.max(1, Math.ceil(cards.length / 2));
+  const page = Math.floor(Date.now() / 5000) % pages;
+  const vis = cards.slice(page * 2, page * 2 + 2);
+  box.innerHTML = vis.map(c => {
     const label = c.n === 0 ? "сьогодні!" : c.n + "д";
     return '<div class="cd-card' + (c.n === 0 ? " today" : "") + '"><span class="cd-ico">' + c.ico + "</span><span>" + c.text + " — " + label + "</span></div>";
   }).join("");
