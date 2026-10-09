@@ -116,9 +116,10 @@
   #foodBtn{right:70px;}
   /* v43: food widget modal (MealPlannerDaily as a widget)
      v47: no dim overlay — only the widget card itself (Iryna 09.10.2026) */
+  /* v49: modal sits lower — covers the slideshow play button, not the weather ticker (Iryna 09.10.2026) */
   #foodModal{
     position:fixed; inset:0; z-index:40; display:none;
-    align-items:center; justify-content:center; padding:20px;
+    align-items:flex-end; justify-content:center; padding:20px 20px 8px;
     background:transparent;
   }
   #foodModal.show{display:flex;}
@@ -459,7 +460,7 @@
   <button id="foodBtn" class="stageIcon" title="Меню">🍽️</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 48 • 09.10.2026</div>
+  <div id="verChip">версія 49 • 09.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
@@ -481,7 +482,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 48 • 09.10.2026</div>
+<div class="ver">версія 49 • 09.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
