@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Меню дня</title>
+<style>
+  /* Lightweight day-menu widget for the kids tablet (iOS 12 safe: no framework). */
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; height:100%;}
+  body{
+    font-family:-apple-system,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
+    background:#FFF7F0; color:#1A1A1A;
+  }
+  #app{max-width:560px; margin:0 auto; padding:12px 12px 24px;}
+  #topbar{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+  #profiles{display:flex; gap:8px; flex:1; overflow-x:auto; padding:2px;}
+  .pchip{
+    flex:none; padding:8px 16px; border-radius:999px; border:1px solid #EFEFEF;
+    background:#fff; font-size:14px; font-weight:700; color:#666; cursor:pointer;
+  }
+  .pchip.on{color:#fff; border-color:transparent;}
+  #langBtn{
+    flex:none; padding:8px 12px; border-radius:999px; border:1px solid #EFEFEF;
+    background:#fff; font-size:12px; font-weight:700; color:#FF7A45; cursor:pointer;
+  }
+  #days{display:flex; gap:8px; overflow-x:auto; margin-bottom:12px; padding:2px;}
+  .dchip{
+    flex:none; padding:8px 14px; border-radius:999px; border:1px solid #EFEFEF;
+    background:#fff; font-size:13px; font-weight:500; color:#666; cursor:pointer;
+  }
+  .dchip.on{background:#fff; border:2px solid #111827; color:#111827; font-weight:700;}
+  .slot{margin-bottom:14px;}
+  .slotTitle{font-size:20px; font-weight:700; margin:0 4px 8px; letter-spacing:-.3px;}
+  .row{display:flex; gap:12px; overflow-x:auto; padding:6px 4px 10px; scroll-snap-type:x mandatory;}
+  .card{
+    flex:none; width:78%; max-width:340px; background:#fff; border-radius:16px; overflow:hidden;
+    border:2px solid transparent; cursor:pointer; scroll-snap-align:center;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+  }
+  .card.on{border-color:#10B981;}
+  .card img{display:block; width:100%; aspect-ratio:16/10; object-fit:cover; background:#F3F4F6;}
+  .card .nm{padding:10px 12px; font-size:15px; font-weight:700; color:#1F2937; text-align:center; line-height:1.3;}
+  .card .ck{
+    display:none; position:absolute; top:8px; right:8px; width:34px; height:34px; border-radius:50%;
+    background:#10B981; color:#fff; font-size:20px; line-height:34px; text-align:center;
+  }
+  .card{position:relative;}
+  .card.on .ck{display:block;}
+  #summary{background:#fff; border:1px solid #EFEFEF; border-radius:16px; padding:14px 16px; margin-top:6px;}
+  #summary h3{margin:0 0 10px; font-size:14px;}
+  #summary .ln{font-size:13px; color:#4B5563; margin:6px 0; line-height:1.4;}
+  #summary .ln b{color:#1A1A1A;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div id="profiles"></div>
+    <button id="langBtn">EN</button>
+  </div>
+  <div id="days"></div>
+  <div id="slots"></div>
+  <div id="summary"></div>
+</div>
+<script>
+(function(){
+  var IMG = "https://meal-planner-daily.vercel.app/meals/";
+  var SLOTS = [
+    {id:"breakfast", uk:"Сніданок", en:"Breakfast", emoji:"🧇", options:[
+      {id:"waffles-maple", uk:"Вафлі з кленовим сиропом", en:"Waffles with maple syrup", img:"waffles-maple.jpg"},
+      {id:"toast-nutella", uk:"Тост з нутеллою", en:"Toast with Nutella", img:"toast-nutella.jpg"},
+      {id:"english-muffin-sausage", uk:"Англійський мафін із сніданковою сосискою", en:"English muffin with breakfast sausage", img:"english-muffin-sausage.jpg"}
+    ]},
+    {id:"lunch", uk:"Обід", en:"Lunch", emoji:"🌮", options:[
+      {id:"tacos-beef", uk:"Такос з фаршем", en:"Beef tacos", img:"tacos-beef.jpg"},
+      {id:"butter-chicken-rice", uk:"Батер чікен з рисом", en:"Butter chicken with rice", img:"butter-chicken-rice.jpg"},
+      {id:"chicken-noodle-soup", uk:"Курячий суп з локшиною", en:"Chicken noodle soup", img:"chicken-noodle-soup.jpg"}
+    ]},
+    {id:"dinner", uk:"Вечеря", en:"Dinner", emoji:"🍝", options:[
+      {id:"pasta-pesto", uk:"Макарони з зеленим песто", en:"Pasta with green pesto", img:"pasta-pesto.jpg"},
+      {id:"burrito-beef", uk:"Буріто з мʼясом", en:"Beef burrito", img:"burrito-beef.jpg"},
+      {id:"veg-chili", uk:"Вегетаріанське чилі", en:"Vegetarian chili", img:"veg-chili.jpg"}
+    ]}
+  ];
+  var PROFILES = [
+    {id:"Tato", uk:"Tato", en:"Dad", color:"#84CC16"},
+    {id:"Alek", uk:"Alek", en:"Alek", color:"#FF7A45"},
+    {id:"Марк", uk:"Марк", en:"Mark", color:"#38BDF8"}
+  ];
+  var DAYS = [
+    {id:"mon", uk:"Пн", en:"Mon"}, {id:"tue", uk:"Вт", en:"Tue"},
+    {id:"wed", uk:"Ср", en:"Wed"}, {id:"thu", uk:"Чт", en:"Thu"},
+    {id:"fri", uk:"Пт", en:"Fri"}, {id:"sat", uk:"Сб", en:"Sat"},
+    {id:"sun", uk:"Нд", en:"Sun"}
+  ];
+  var LS_CHOICES = "menu-widget-choices-v1", LS_LANG = "menu-widget-lang-v1";
+
+  var state = { lang:"uk", day:"mon", profile:"Tato", choices:{} };
+
+  function load(){
+    try{
+      var c = localStorage.getItem(LS_CHOICES);
+      if(c) state.choices = JSON.parse(c);
+      var l = localStorage.getItem(LS_LANG);
+      if(l === "uk" || l === "en") state.lang = l;
+    }catch(e){}
+  }
+  function save(){
+    try{ localStorage.setItem(LS_CHOICES, JSON.stringify(state.choices)); }catch(e){}
+  }
+  function saveLang(){
+    try{ localStorage.setItem(LS_LANG, state.lang); }catch(e){}
+  }
+  function T(uk, en){ return state.lang === "uk" ? uk : en; }
+  function esc(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function getChoice(day, profile, slotId){
+    return (state.choices[day] && state.choices[day][profile] && state.choices[day][profile][slotId]) || null;
+  }
+  function setChoice(day, profile, slotId, mealId){
+    if(!state.choices[day]) state.choices[day] = {};
+    if(!state.choices[day][profile]) state.choices[day][profile] = {};
+    state.choices[day][profile][slotId] = mealId;
+    save();
+  }
+  function profileById(id){
+    for(var i=0;i<PROFILES.length;i++) if(PROFILES[i].id===id) return PROFILES[i];
+    return PROFILES[0];
+  }
+
+  function renderProfiles(){
+    var html = "";
+    for(var i=0;i<PROFILES.length;i++){
+      var p = PROFILES[i];
+      var on = state.profile === p.id;
+      html += '<button class="pchip' + (on ? " on" : "") + '" data-p="' + p.id + '"' +
+        (on ? ' style="background:' + p.color + '"' : "") + '>' + esc(T(p.uk, p.en)) + "</button>";
+    }
+    document.getElementById("profiles").innerHTML = html;
+    var btns = document.getElementById("profiles").getElementsByClassName("pchip");
+    for(var j=0;j<btns.length;j++){
+      btns[j].onclick = function(){ state.profile = this.getAttribute("data-p"); render(); };
+    }
+  }
+  function renderDays(){
+    var html = "";
+    for(var i=0;i<DAYS.length;i++){
+      var d = DAYS[i];
+      html += '<button class="dchip' + (state.day===d.id ? " on" : "") + '" data-d="' + d.id + '">' +
+        esc(T(d.uk, d.en)) + "</button>";
+    }
+    document.getElementById("days").innerHTML = html;
+    var btns = document.getElementById("days").getElementsByClassName("dchip");
+    for(var j=0;j<btns.length;j++){
+      btns[j].onclick = function(){ state.day = this.getAttribute("data-d"); render(); };
+    }
+  }
+  function renderSlots(){
+    var html = "";
+    for(var s=0;s<SLOTS.length;s++){
+      var slot = SLOTS[s];
+      html += '<div class="slot"><div class="slotTitle">' + slot.emoji + " " + esc(T(slot.uk, slot.en)) + "</div>" +
+        '<div class="row">';
+      for(var o=0;o<slot.options.length;o++){
+        var m = slot.options[o];
+        var chosen = getChoice(state.day, state.profile, slot.id) === m.id;
+        html += '<div class="card' + (chosen ? " on" : "") + '" data-s="' + slot.id + '" data-m="' + m.id + '">' +
+          '<div class="ck">✓</div>' +
+          '<img src="' + IMG + m.img + '" alt="">' +
+          '<div class="nm">' + esc(T(m.uk, m.en)) + "</div></div>";
+      }
+      html += "</div></div>";
+    }
+    document.getElementById("slots").innerHTML = html;
+    var cards = document.getElementById("slots").getElementsByClassName("card");
+    for(var c=0;c<cards.length;c++){
+      cards[c].onclick = function(){
+        setChoice(state.day, state.profile, this.getAttribute("data-s"), this.getAttribute("data-m"));
+        render();
+      };
+    }
+  }
+  function mealName(slotId, mealId){
+    for(var s=0;s<SLOTS.length;s++){
+      if(SLOTS[s].id !== slotId) continue;
+      for(var o=0;o<SLOTS[s].options.length;o++){
+        if(SLOTS[s].options[o].id === mealId) return T(SLOTS[s].options[o].uk, SLOTS[s].options[o].en);
+      }
+    }
+    return "—";
+  }
+  function renderSummary(){
+    var dayName = "";
+    for(var i=0;i<DAYS.length;i++) if(DAYS[i].id===state.day) dayName = T(DAYS[i].uk, DAYS[i].en);
+    var html = "<h3>" + esc(T("Вибір на ", "Choices for ") + dayName) + "</h3>";
+    for(var p=0;p<PROFILES.length;p++){
+      var pr = PROFILES[p];
+      var parts = [];
+      for(var s=0;s<SLOTS.length;s++){
+        parts.push(mealName(SLOTS[s].id, getChoice(state.day, pr.id, SLOTS[s].id)));
+      }
+      html += '<div class="ln"><b>' + esc(T(pr.uk, pr.en)) + ":</b> " + esc(parts.join(" • ")) + "</div>";
+    }
+    document.getElementById("summary").innerHTML = html;
+  }
+  function render(){
+    document.getElementById("langBtn").textContent = state.lang === "uk" ? "EN" : "УКР";
+    document.title = T("Меню дня", "Day menu");
+    renderProfiles();
+    renderDays();
+    renderSlots();
+    renderSummary();
+  }
+  document.getElementById("langBtn").onclick = function(){
+    state.lang = state.lang === "uk" ? "en" : "uk";
+    saveLang();
+    render();
+  };
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
