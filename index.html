@@ -76,6 +76,7 @@
   #countdowns{
     position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom) + 32px); z-index:3;
     display:flex; flex-direction:column; gap:1.2vmin; align-items:flex-end;
+    transition:opacity .28s ease;
   }
   .cd-card{
     display:flex; align-items:center; justify-content:center; gap:1vmin;
@@ -139,7 +140,8 @@
   }
   #foodX:active{transform:scale(.92);}
   #foodBody{flex:1; min-height:0; padding:0 12px 12px;}
-  #foodFrame{width:100%; height:100%; border:none; border-radius:18px; background:#fff;}
+  #foodFrame{width:100%; height:100%; border:none; border-radius:18px; background:#fff;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;}
   /* v43: countdown icons are white SVG, not emoji */
   .cd-card .cd-ico svg{width:3vmin; height:3vmin; display:block;}
   /* v23: calendar / school modal, app style (below alarm overlay) */
@@ -234,6 +236,7 @@
   @-webkit-keyframes tickMove{from{-webkit-transform:translateX(0);}to{-webkit-transform:translateX(-50%);}}
   @keyframes tickMove{from{transform:translateX(0);}to{transform:translateX(-50%);}}
   #verChip{
+    display:none; /* v45: hidden at launch per Iryna 09.10.2026 */
     position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom) + 10px); z-index:3;
     font-size:11px; color:rgba(255,255,255,.55); text-shadow:0 1px 4px rgba(0,0,0,.5);
     pointer-events:none;
@@ -451,7 +454,7 @@
   <button id="foodBtn" class="stageIcon" title="Меню">🍽️</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 44 • 09.10.2026</div>
+  <div id="verChip">версія 45 • 09.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
@@ -473,7 +476,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 44 • 09.10.2026</div>
+<div class="ver">версія 45 • 09.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -493,7 +496,7 @@
       <div id="foodTitle">🍽️ Меню дня</div>
       <button id="foodX" title="Закрити">✕</button>
     </div>
-    <div id="foodBody"><iframe id="foodFrame" src="menu-widget.html" title="Меню дня"></iframe></div>
+    <div id="foodBody"><iframe id="foodFrame" src="menu-widget.html" title="Меню дня" scrolling="yes"></iframe></div>
   </div>
 </div>
 
@@ -1563,6 +1566,8 @@ function daysUntil(month, day, now){
 const ICO_PUMPKIN = '<svg viewBox="0 0 24 24" fill="#fff"><ellipse cx="12" cy="14" rx="8" ry="6.5"/><rect x="11" y="4" width="2.4" height="5" rx="1.2"/></svg>';
 const ICO_PLANE = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>';
 const ICO_CAKE = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M4 12h16v8H4z"/><path d="M9 5h2v5H9zM13 5h2v5h-2z"/><circle cx="10" cy="3.4" r="1.1"/><circle cx="14" cy="3.4" r="1.1"/></svg>';
+/* v45: track shown page so rotation cross-fades gently instead of snapping */
+let cdPageShown = -1;
 function renderCountdowns(d){
   const box = $("countdowns"); if(!box) return;
   const cards = [];
@@ -1575,14 +1580,22 @@ function renderCountdowns(d){
   birthdayList().forEach(b => {
     cards.push({ico:ICO_CAKE, text:b.name, n: daysUntil(b.month, b.day, d)});
   });
-  /* v43: 2 cards at a time, rotate every 5 seconds */
+  /* v43: 2 cards at a time, rotate every 5 seconds
+     v45: gentle fade out/in on rotation (Iryna 09.10.2026) */
   const pages = Math.max(1, Math.ceil(cards.length / 2));
   const page = Math.floor(Date.now() / 5000) % pages;
+  if(page === cdPageShown) return;
+  cdPageShown = page;
   const vis = cards.slice(page * 2, page * 2 + 2);
-  box.innerHTML = vis.map(c => {
+  const html = vis.map(c => {
     const label = c.n === 0 ? "сьогодні!" : c.n + "д";
     return '<div class="cd-card' + (c.n === 0 ? " today" : "") + '"><span class="cd-ico">' + c.ico + "</span><span>" + c.text + " — " + label + "</span></div>";
   }).join("");
+  box.style.opacity = "0";
+  setTimeout(function(){
+    box.innerHTML = html;
+    box.style.opacity = "1";
+  }, 280);
 }
 /* ---------- Photo stage (v16): fullscreen permanent background while waiting ----------
    The autumn cover (cover.jpg) fills the whole screen; every other photo is
