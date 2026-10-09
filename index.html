@@ -141,10 +141,12 @@
     background:rgba(255,255,255,.12); color:#fff;
   }
   #foodX:active{transform:scale(.92);}
-  /* v47: wrapper clips rounded corners — old iOS breaks radius+overflow on the iframe itself */
-  #foodBody{flex:1; min-height:0; margin:0 12px 12px; border-radius:18px; overflow:hidden;}
-  #foodFrame{width:100%; height:100%; border:none; background:#fff; display:block;
+  /* v48: iframe auto-height to content (same-origin) + the WRAPPER scrolls.
+     Old iOS cannot reliably scroll inside an iframe, so the iframe is sized
+     to its full content height and the parent div does the scrolling. */
+  #foodBody{flex:1; min-height:0; margin:0 12px 12px; border-radius:18px; overflow:hidden;
     overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  #foodFrame{width:100%; height:120px; border:none; background:#fff; display:block;}
   /* v43: countdown icons are white SVG, not emoji */
   .cd-card .cd-ico svg{width:3vmin; height:3vmin; display:block;}
   /* v23: calendar / school modal, app style (below alarm overlay) */
@@ -457,7 +459,7 @@
   <button id="foodBtn" class="stageIcon" title="Меню">🍽️</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 47 • 09.10.2026</div>
+  <div id="verChip">версія 48 • 09.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
@@ -479,7 +481,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 47 • 09.10.2026</div>
+<div class="ver">версія 48 • 09.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -575,43 +577,32 @@ function load(){
 function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(events)); }catch(e){} }
 /* ---------- v24: self update check ----------
    При кожному відкритті (і поверненні в застосунок) питає сервер про свіжу
-   версію index.html; якщо новіша — показує тост «✨ Є оновлення» з кнопкою
-   «Оновити» (location.reload). Вирішує проблему заморожених iOS web clip:
-   перезберігати іконку більше не треба. */
-const APP_VER = 40;
-let updToastShown = false, lastUpdCheck = 0;
+   версію index.html; якщо новіша — ТИХО перезавантажується без жодних тостів
+   (Iryna 09.10.2026: фідбек про оновлення при запуску не треба).
+   Вирішує проблему заморожених iOS web clip: перезберігати іконку не треба.
+   Версія читається зі самої сторінки (#verChip), щоб не дрейфувала як
+   старий захардкоджений APP_VER. */
+let updReloaded = false, lastUpdCheck = 0;
+function currentAppVer(){
+  try{
+    const el = document.getElementById("verChip");
+    const m = el && el.textContent.match(/(\d+)/);
+    return m ? +m[1] : 0;
+  }catch(e){ return 0; }
+}
 function checkForUpdate(){
   const now = Date.now();
-  if(updToastShown || now - lastUpdCheck < 10*60*1000) return; // не частіше разу на 10 хв
+  if(updReloaded || now - lastUpdCheck < 10*60*1000) return; // не частіше разу на 10 хв
   lastUpdCheck = now;
   const url = location.href.split("#")[0].split("?")[0] + "?_upd=" + now;
   fetch(url, {cache:"no-store"}).then(r => r.ok ? r.text() : Promise.reject())
     .then(t => {
       const m = t.match(/версія\s+(\d+)/);
-      if(m && +m[1] > APP_VER && !updToastShown){
-        updToastShown = true;
-        showUpdateToast(+m[1]);
+      if(m && +m[1] > currentAppVer() && !updReloaded){
+        updReloaded = true;
+        location.reload(); // тихо, без тоста
       }
     }).catch(()=>{ /* offline — мовчимо */ });
-}
-function showUpdateToast(v){
-  let b = document.getElementById("updToast");
-  if(b) return;
-  b = document.createElement("div");
-  b.id = "updToast";
-  b.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#3a2e2e;color:#fff;padding:10px 10px 10px 18px;border-radius:999px;font-size:15px;font-weight:700;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px;max-width:94vw;";
-  const label = document.createElement("span");
-  label.textContent = "✨ Є оновлення (v" + v + ")";
-  const btn = document.createElement("button");
-  btn.textContent = "Оновити";
-  btn.style.cssText = "background:#ff9f1c;border:none;color:#fff;font-weight:800;font-size:15px;padding:8px 16px;border-radius:999px;";
-  btn.onclick = ()=>{ location.reload(); };
-  const x = document.createElement("button");
-  x.textContent = "✕";
-  x.style.cssText = "background:none;border:none;color:#cbb;font-size:15px;padding:6px 8px;";
-  x.onclick = ()=>{ b.remove(); };
-  b.appendChild(label); b.appendChild(btn); b.appendChild(x);
-  document.body.appendChild(b);
 }
 
 /* ---------- v23: Calendar + School ----------
@@ -676,8 +667,30 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape" && document.getE
 /* ---------- Food widget (v43): MealPlannerDaily as a widget ----------
    Tap the 🍽️ icon (left of the schedule icon): the family day-menu app
    opens in a modal widget. */
-function openFoodModal(){ document.getElementById("foodModal").classList.add("show"); }
+function openFoodModal(){ document.getElementById("foodModal").classList.add("show"); fitFoodFrame(); }
 function closeFoodModal(){ document.getElementById("foodModal").classList.remove("show"); }
+/* v48: size the menu widget iframe to its content height (same origin, no CORS issue).
+   Called on open, on iframe load, and a few times after (images load async). */
+function fitFoodFrame(){
+  var f = document.getElementById("foodFrame");
+  if(!f) return;
+  try{
+    var doc = f.contentDocument || (f.contentWindow && f.contentWindow.document);
+    if(!doc || !doc.body) return;
+    var de = doc.documentElement;
+    var h = Math.max(doc.body.scrollHeight, de ? de.scrollHeight : 0);
+    if(h > 120) f.style.height = h + "px";
+  }catch(e){ /* ignore */ }
+}
+(function(){
+  var f = document.getElementById("foodFrame");
+  if(!f) return;
+  f.addEventListener("load", function(){
+    fitFoodFrame();
+    var n = 0;
+    var iv = setInterval(function(){ fitFoodFrame(); if(++n >= 20) clearInterval(iv); }, 500);
+  });
+})();
 document.getElementById("foodBtn").onclick = openFoodModal;
 document.getElementById("foodX").onclick = closeFoodModal;
 document.getElementById("foodModal").addEventListener("click", e=>{ if(e.target === document.getElementById("foodModal")) closeFoodModal(); });
@@ -1484,7 +1497,7 @@ async function syncRemoteAlarms(){
       }
       const ev = {id:String(a.id), name:String(a.name || "Нова подія"), time:a.time, emoji:String(a.emoji || "⏰"), sound:sound};
       if(days) ev.days = days;
-      if(a.enabled === false) ev.enabled = false;
+      ev.enabled = false; /* v48: нові з сервера теж вимкнені, доки Iryna не увімкне */
       events.push(ev);
       added++; lastName = String(a.name || "");
     });
@@ -1741,6 +1754,12 @@ function loadTicker(){
 
 /* ---------- Boot ---------- */
 applyLinkAdd();
+/* v48: при кожному запуску всі будильники вимкнені — Iryna вмикає сама (09.10.2026) */
+try{
+  let anyOn = false;
+  events.forEach(function(ev){ if(ev.enabled !== false){ ev.enabled = false; anyOn = true; } });
+  if(anyOn) save();
+}catch(e){}
 tickClock(); renderList();
 startSlideshow();
 $("photoAdd").addEventListener("change", e=>{ handlePhotoFile(e.target.files[0]); e.target.value = ""; });

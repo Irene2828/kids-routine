@@ -66,8 +66,13 @@
 <script>
 (function(){
   var IMG = "https://meal-planner-daily.vercel.app/meals/";
+  /* v48: hand-drawn breakfast icon (fried egg) — the waffle emoji does not
+     exist on old iOS and renders as a weird glyph */
+  var ICO_BREAKFAST = '<svg viewBox="0 0 24 24" style="width:22px;height:22px;vertical-align:-4px">' +
+    '<path d="M12 2.8c-4.2 0-7.8 3.8-7.8 9.2s3.6 9.2 7.8 9.2 7.8-4 7.8-9.2S16.2 2.8 12 2.8z" fill="#ffffff" stroke="#D1D5DB" stroke-width="1"/>' +
+    '<circle cx="12" cy="12" r="4.4" fill="#FFB300"/></svg>';
   var SLOTS = [
-    {id:"breakfast", uk:"Сніданок", en:"Breakfast", emoji:"🧇", options:[
+    {id:"breakfast", uk:"Сніданок", en:"Breakfast", emoji:ICO_BREAKFAST, options:[
       {id:"waffles-maple", uk:"Вафлі з кленовим сиропом", en:"Waffles with maple syrup", img:"waffles-maple.jpg"},
       {id:"toast-nutella", uk:"Тост з нутеллою", en:"Toast with Nutella", img:"toast-nutella.jpg"},
       {id:"english-muffin-sausage", uk:"Англійський мафін із сніданковою сосискою", en:"English muffin with breakfast sausage", img:"english-muffin-sausage.jpg"}
