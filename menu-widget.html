@@ -34,12 +34,13 @@
   .slotTitle{font-size:20px; font-weight:700; margin:0 4px 8px; letter-spacing:-.3px;}
   .row{display:flex; gap:12px; overflow-x:auto; padding:6px 4px 10px; scroll-snap-type:x mandatory;}
   .card{
-    flex:none; width:78%; max-width:340px; background:transparent; border-radius:16px;
+    flex:none; width:78%; max-width:340px; background:#fff; border-radius:16px; overflow:hidden;
     border:2px solid transparent; cursor:pointer; scroll-snap-align:center;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
   }
   .card.on{border-color:#10B981;}
-  .card img{display:block; width:100%; aspect-ratio:16/10; object-fit:cover; background:#F3F4F6; border-radius:14px;}
-  .card .nm{padding:8px 4px 2px; font-size:15px; font-weight:700; color:#1F2937; text-align:center; line-height:1.3; background:transparent;}
+  .card img{display:block; width:100%; aspect-ratio:16/10; object-fit:cover; background:#F3F4F6;}
+  .card .nm{padding:10px 12px; font-size:15px; font-weight:700; color:#1F2937; text-align:center; line-height:1.3;}
   .card .ck{
     display:none; position:absolute; top:8px; right:8px; width:34px; height:34px; border-radius:50%;
     background:#10B981; color:#fff; font-size:20px; line-height:34px; text-align:center;
