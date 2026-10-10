@@ -817,7 +817,7 @@ function closeFoodModal(){ document.getElementById("foodModal").classList.remove
     for(var i=0;i<PROFILES.length;i++){
       var p = PROFILES[i];
       var on = state.profile === p.id;
-      html += '<button class="pchip' + (on ? " on" : "") + '" data-p="' + p.id + '"' +
+      html += '<button class="wPchip' + (on ? " on" : "") + '" data-p="' + p.id + '"' +
         (on ? ' style="background:' + p.color + '"' : "") + '>' + esc(T(p.uk, p.en)) + "</button>";
     }
     document.getElementById("wProfiles").innerHTML = html;
@@ -830,7 +830,7 @@ function closeFoodModal(){ document.getElementById("foodModal").classList.remove
     var html = "";
     for(var i=0;i<DAYS.length;i++){
       var d = DAYS[i];
-      html += '<button class="dchip' + (state.day===d.id ? " on" : "") + '" data-d="' + d.id + '">' +
+      html += '<button class="wDchip' + (state.day===d.id ? " on" : "") + '" data-d="' + d.id + '">' +
         esc(T(d.uk, d.en)) + "</button>";
     }
     document.getElementById("wDays").innerHTML = html;
