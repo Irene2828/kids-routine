@@ -184,13 +184,9 @@
     var cards = box.getElementsByClassName("card");
     for(var c=0;c<cards.length;c++){
       cards[c].onclick = function(){
-        var card = this, row = card.parentNode;
-        /* v49: tap centers the card; the scroll handler then auto-selects it */
-        try{
-          var rr = row.getBoundingClientRect(), cr = card.getBoundingClientRect();
-          row.scrollLeft += (cr.left + cr.width / 2) - (rr.left + rr.width / 2);
-        }catch(e){}
-        selectCard(card);
+        /* v52: tap selects exactly the tapped card — no programmatic scroll,
+           so auto-select can't override the choice (Iryna 09.10.2026) */
+        selectCard(this);
       };
     }
     var rows = box.getElementsByClassName("row");
