@@ -460,7 +460,7 @@
   <button id="foodBtn" class="stageIcon" title="Меню">🍽️</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 50 • 09.10.2026</div>
+  <div id="verChip">версія 51 • 09.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
@@ -482,7 +482,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 50 • 09.10.2026</div>
+<div class="ver">версія 51 • 09.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -1600,7 +1600,8 @@ function renderCountdowns(d){
     cards.push({ico:ICO_CAKE, text:b.name, n: daysUntil(b.month, b.day, d)});
   });
   /* v43: 2 cards at a time, rotate every 5 seconds
-     v45: gentle fade out/in on rotation (Iryna 09.10.2026) */
+     v45: gentle fade out/in on rotation
+     v51: cards shatter into particles, then the next pair appears (Iryna 09.10.2026) */
   const pages = Math.max(1, Math.ceil(cards.length / 2));
   const page = Math.floor(Date.now() / 5000) % pages;
   if(page === cdPageShown) return;
@@ -1610,11 +1611,36 @@ function renderCountdowns(d){
     const label = c.n === 0 ? "сьогодні!" : c.n + "д";
     return '<div class="cd-card' + (c.n === 0 ? " today" : "") + '"><span class="cd-ico">' + c.ico + "</span><span>" + c.text + " — " + label + "</span></div>";
   }).join("");
+  const olds = box.getElementsByClassName("cd-card");
+  for(let i = 0; i < olds.length; i++) cdBurst(olds[i].getBoundingClientRect());
   box.style.opacity = "0";
   setTimeout(function(){
     box.innerHTML = html;
     box.style.opacity = "1";
-  }, 280);
+  }, 200);
+}
+/* v51: shatter a card into fading particles (old-iOS safe: fixed divs, transform+opacity) */
+function cdBurst(rect){
+  for(let p = 0; p < 12; p++){
+    const s = document.createElement("div");
+    const size = 3 + Math.random() * 7;
+    s.style.position = "fixed";
+    s.style.left = (rect.left + Math.random() * rect.width) + "px";
+    s.style.top = (rect.top + Math.random() * rect.height) + "px";
+    s.style.width = s.style.height = size + "px";
+    s.style.borderRadius = "50%";
+    s.style.background = "rgba(255,255,255," + (0.6 + Math.random() * 0.4).toFixed(2) + ")";
+    s.style.pointerEvents = "none";
+    s.style.zIndex = "5";
+    document.body.appendChild(s);
+    const dx = (Math.random() - 0.5) * 140, dy = (Math.random() - 0.5) * 140 - 20;
+    setTimeout(function(){
+      s.style.transition = "transform .5s ease-out, opacity .5s ease-out";
+      s.style.transform = "translate(" + dx.toFixed(0) + "px," + dy.toFixed(0) + "px) scale(.15)";
+      s.style.opacity = "0";
+    }, 30);
+    setTimeout(function(){ if(s.parentNode) s.parentNode.removeChild(s); }, 750);
+  }
 }
 /* ---------- Photo stage (v16): fullscreen permanent background while waiting ----------
    The autumn cover (cover.jpg) fills the whole screen; every other photo is
