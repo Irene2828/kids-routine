@@ -33,8 +33,6 @@
   .slot{margin-bottom:14px;}
   .slotTitle{font-size:20px; font-weight:700; margin:0 4px 8px; letter-spacing:-.3px;}
   .row{display:flex; gap:12px; overflow-x:auto; padding:6px 4px 10px; scroll-snap-type:x mandatory;}
-  /* v49: spacers let the first/last cards reach center (needed for auto-select) */
-  .row::before, .row::after{content:""; flex:none; width:14%;}
   .card{
     flex:none; width:78%; max-width:340px; background:#fff; border-radius:16px; overflow:hidden;
     border:2px solid transparent; cursor:pointer; scroll-snap-align:center;
@@ -204,12 +202,26 @@
         };
       })(rows[r]);
     }
+    applyRowSpacers();
   }
   function selectCard(card){
     setChoice(state.day, state.profile, card.getAttribute("data-s"), card.getAttribute("data-m"));
     var cs = card.parentNode.getElementsByClassName("card");
     for(var i=0;i<cs.length;i++) cs[i].className = "card" + (cs[i] === card ? " on" : "");
     renderSummary();
+  }
+  /* v50: real margin spacers computed in JS — old iOS ignores pseudo-element
+     spacers for scroll centering, real margins always count toward scrollWidth */
+  function applyRowSpacers(){
+    var rows = document.getElementById("slots").getElementsByClassName("row");
+    for(var r=0;r<rows.length;r++){
+      var row = rows[r];
+      var cards = row.getElementsByClassName("card");
+      if(!cards.length) continue;
+      var sp = Math.max(0, (row.clientWidth - cards[0].offsetWidth) / 2);
+      cards[0].style.marginLeft = sp + "px";
+      cards[cards.length-1].style.marginRight = sp + "px";
+    }
   }
   /* v49: whichever card is centered becomes the active profile's choice,
      summary text updates live (Iryna 09.10.2026) */
@@ -274,6 +286,7 @@
     saveLang();
     render();
   };
+  window.addEventListener("resize", function(){ applyRowSpacers(); });
   load();
   render();
 })();

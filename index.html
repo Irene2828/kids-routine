@@ -460,7 +460,7 @@
   <button id="foodBtn" class="stageIcon" title="Меню">🍽️</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 49 • 09.10.2026</div>
+  <div id="verChip">версія 50 • 09.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
@@ -482,7 +482,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 49 • 09.10.2026</div>
+<div class="ver">версія 50 • 09.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -686,6 +686,8 @@ function fitFoodFrame(){
 (function(){
   var f = document.getElementById("foodFrame");
   if(!f) return;
+  /* v50: cache-bust the widget on every app version — the old iPad caches aggressively */
+  try{ f.src = "menu-widget.html?v=" + currentAppVer(); }catch(e){}
   f.addEventListener("load", function(){
     fitFoodFrame();
     var n = 0;
