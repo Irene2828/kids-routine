@@ -126,7 +126,7 @@
   /* v46: no dark sub-background behind the white widget — only the dim overlay (Iryna 09.10.2026)
      v47: dark card restored as the widget frame (Iryna 09.10.2026) */
   #foodCard{
-    width:100%; max-width:520px; height:86vh; max-height:800px;
+    width:100%; max-width:400px; height:86vh; max-height:800px; /* v55: widget slightly wider than a dish (Iryna) */
     display:flex; flex-direction:column; overflow:hidden;
     background:rgba(26,26,31,.96); border-radius:28px;
     border:1px solid rgba(255,255,255,.14);
@@ -152,24 +152,25 @@
 
   /* Lightweight day-menu widget for the kids tablet (iOS 12 safe: no framework). */
   #wApp{background:#FFF7F0; color:#1A1A1A; max-width:560px; margin:0 auto; padding:12px 12px 24px;}
+  #wApp, #wApp *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;} /* v55 */
   
   #wTopbar{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
   #wProfiles{display:flex; gap:8px; flex:1; overflow-x:auto; padding:2px;}
   .wPchip{
-    flex:none; padding:8px 16px; border-radius:999px; border:1px solid #EFEFEF;
+    -webkit-appearance:none; appearance:none; flex:none; padding:8px 16px; border-radius:999px; border:1px solid #EFEFEF;
     background:#fff; font-size:14px; font-weight:700; color:#666; cursor:pointer;
   }
-  .wPchip.on{color:#fff; border-color:transparent;}
+  .wPchip.on{color:#fff; border-color:transparent; border-radius:999px; -webkit-appearance:none; appearance:none;} /* v55: round active chips */
   #wLangBtn{
     flex:none; padding:8px 12px; border-radius:999px; border:1px solid #EFEFEF;
     background:#fff; font-size:12px; font-weight:700; color:#FF7A45; cursor:pointer;
   }
   #wDays{display:flex; gap:8px; overflow-x:auto; margin-bottom:12px; padding:2px;}
   .wDchip{
-    flex:none; padding:8px 14px; border-radius:999px; border:1px solid #EFEFEF;
+    -webkit-appearance:none; appearance:none; flex:none; padding:8px 14px; border-radius:999px; border:1px solid #EFEFEF;
     background:#fff; font-size:13px; font-weight:500; color:#666; cursor:pointer;
   }
-  .wDchip.on{background:#fff; border:2px solid #111827; color:#111827; font-weight:700;}
+  .wDchip.on{background:#fff; border:2px solid #111827; color:#111827; font-weight:700; border-radius:999px; box-shadow:0 2px 8px rgba(0,0,0,.18);} /* v55: unmissable active day */
   .wSlot{margin-bottom:14px;}
   .wSlotTitle{font-size:20px; font-weight:700; margin:0 4px 8px; letter-spacing:-.3px;}
   /* v51: proximity (not mandatory) — mandatory yanked the scroll back on old iOS */
@@ -177,7 +178,7 @@
   .wRow{display:flex; overflow-x:auto; padding:6px 4px 10px; scroll-snap-type:x proximity;}
   .wCard{margin:0 6px;}
   .wCard{
-    flex:none; width:78%; max-width:340px; background:#fff; border-radius:16px; overflow:hidden;
+    flex:none; width:88%; max-width:340px; /* v55: wider cards */ background:#fff; border-radius:16px; overflow:hidden;
     border:2px solid transparent; cursor:pointer; scroll-snap-align:center;
     box-shadow:0 4px 12px rgba(0,0,0,.08);
   }
@@ -510,7 +511,7 @@
   <button id="foodBtn" class="stageIcon" title="Меню">🍽️</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 54 • 09.10.2026</div>
+  <div id="verChip">версія 55 • 09.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
@@ -532,7 +533,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 54 • 09.10.2026</div>
+<div class="ver">версія 55 • 09.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -860,8 +861,10 @@ function closeFoodModal(){ document.getElementById("foodModal").classList.remove
     for(var c=0;c<cards.length;c++){
       cards[c].onclick = function(){
         /* v52: tap selects exactly the tapped card — no programmatic scroll,
-           so auto-select can't override the choice (Iryna 09.10.2026) */
-        selectCard(this);
+           so auto-select can't override the choice (Iryna 09.10.2026)
+           v55: tap locks the choice for 1.2s — a finger wobble fires onscroll
+           and auto-select would otherwise revert the tap */
+        selectCard(this, true);
       };
     }
     var rows = box.getElementsByClassName("wRow");
@@ -876,11 +879,13 @@ function closeFoodModal(){ document.getElementById("foodModal").classList.remove
     }
     applyRowSpacers();
   }
-  function selectCard(card){
+  var tapLockUntil = 0; /* v55 */
+  function selectCard(card, fromTap){
     setChoice(state.day, state.profile, card.getAttribute("data-s"), card.getAttribute("data-m"));
     var cs = card.parentNode.getElementsByClassName("wCard");
     for(var i=0;i<cs.length;i++) cs[i].className = "wCard" + (cs[i] === card ? " on" : "");
     renderSummary();
+    if(fromTap) tapLockUntil = Date.now() + 1200;
   }
   /* v51: only a TRAILING spacer — a leading one made cards jump right on open
      and fought the snap (Iryna 09.10.2026) */
@@ -914,6 +919,7 @@ function closeFoodModal(){ document.getElementById("foodModal").classList.remove
     return best;
   }
   function autoSelectFromScroll(){
+    if(Date.now() < tapLockUntil) return; /* v55: don't override a fresh tap */
     var rows = document.getElementById("wSlots").getElementsByClassName("wRow");
     for(var r=0;r<rows.length;r++){
       var row = rows[r];
