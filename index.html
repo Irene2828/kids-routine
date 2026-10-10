@@ -145,9 +145,58 @@
   /* v48: iframe auto-height to content (same-origin) + the WRAPPER scrolls.
      Old iOS cannot reliably scroll inside an iframe, so the iframe is sized
      to its full content height and the parent div does the scrolling. */
+  /* v54: widget is inlined (no iframe) — the wrapper scrolls it directly */
   #foodBody{flex:1; min-height:0; margin:0 12px 12px; border-radius:18px; overflow:hidden;
     overflow-y:auto; -webkit-overflow-scrolling:touch;}
-  #foodFrame{width:100%; height:120px; border:none; background:#fff; display:block;}
+  /* v54: inlined menu widget styles */
+
+  /* Lightweight day-menu widget for the kids tablet (iOS 12 safe: no framework). */
+  #wApp{background:#FFF7F0; color:#1A1A1A; max-width:560px; margin:0 auto; padding:12px 12px 24px;}
+  
+  #wTopbar{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+  #wProfiles{display:flex; gap:8px; flex:1; overflow-x:auto; padding:2px;}
+  .wPchip{
+    flex:none; padding:8px 16px; border-radius:999px; border:1px solid #EFEFEF;
+    background:#fff; font-size:14px; font-weight:700; color:#666; cursor:pointer;
+  }
+  .wPchip.on{color:#fff; border-color:transparent;}
+  #wLangBtn{
+    flex:none; padding:8px 12px; border-radius:999px; border:1px solid #EFEFEF;
+    background:#fff; font-size:12px; font-weight:700; color:#FF7A45; cursor:pointer;
+  }
+  #wDays{display:flex; gap:8px; overflow-x:auto; margin-bottom:12px; padding:2px;}
+  .wDchip{
+    flex:none; padding:8px 14px; border-radius:999px; border:1px solid #EFEFEF;
+    background:#fff; font-size:13px; font-weight:500; color:#666; cursor:pointer;
+  }
+  .wDchip.on{background:#fff; border:2px solid #111827; color:#111827; font-weight:700;}
+  .wSlot{margin-bottom:14px;}
+  .wSlotTitle{font-size:20px; font-weight:700; margin:0 4px 8px; letter-spacing:-.3px;}
+  /* v51: proximity (not mandatory) — mandatory yanked the scroll back on old iOS */
+  /* v53: no flex gap — iOS 12 doesn't support it; margins instead */
+  .wRow{display:flex; overflow-x:auto; padding:6px 4px 10px; scroll-snap-type:x proximity;}
+  .wCard{margin:0 6px;}
+  .wCard{
+    flex:none; width:78%; max-width:340px; background:#fff; border-radius:16px; overflow:hidden;
+    border:2px solid transparent; cursor:pointer; scroll-snap-align:center;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+  }
+  .wCard.on{border-color:#10B981;}
+  /* v53: padding-bottom reserves 16:10 space before images load — no layout jumps on old iOS (no aspect-ratio support) */
+  .wCard .wImgwrap{position:relative; width:100%; padding-bottom:62.5%; background:#F3F4F6; border-radius:14px; overflow:hidden;}
+  .wCard .wImgwrap img{position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover;}
+  .wCard .wNm{padding:10px 12px; font-size:15px; font-weight:700; color:#1F2937; text-align:center; line-height:1.3;}
+  .wCard .wCk{
+    display:none; position:absolute; top:8px; right:8px; width:34px; height:34px; border-radius:50%;
+    background:#10B981; color:#fff; font-size:20px; line-height:34px; text-align:center;
+  }
+  .wCard{position:relative;}
+  .wCard.on .wCk{display:block;}
+  #wSummary{background:#fff; border:1px solid #EFEFEF; border-radius:16px; padding:14px 16px; margin-top:6px;}
+  #wSummary h3{margin:0 0 10px; font-size:14px;}
+  #wSummary .ln{font-size:13px; color:#4B5563; margin:6px 0; line-height:1.4;}
+  #wSummary .ln b{color:#1A1A1A;}
+
   /* v43: countdown icons are white SVG, not emoji */
   .cd-card .cd-ico svg{width:3vmin; height:3vmin; display:block;}
   /* v23: calendar / school modal, app style (below alarm overlay) */
@@ -461,7 +510,7 @@
   <button id="foodBtn" class="stageIcon" title="Меню">🍽️</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 53 • 09.10.2026</div>
+  <div id="verChip">версія 54 • 09.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
@@ -483,7 +532,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 53 • 09.10.2026</div>
+<div class="ver">версія 54 • 09.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -503,7 +552,17 @@
       <div id="foodTitle">🍽️ Меню дня</div>
       <button id="foodX" title="Закрити">✕</button>
     </div>
-    <div id="foodBody"><iframe id="foodFrame" src="menu-widget.html" title="Меню дня" scrolling="yes"></iframe></div>
+    <div id="foodBody">
+<div id="wApp">
+  <div id="wTopbar">
+    <div id="wProfiles"></div>
+    <button id="wLangBtn">EN</button>
+  </div>
+  <div id="wDays"></div>
+  <div id="wSlots"></div>
+  <div id="wSummary"></div>
+</div>
+    </div>
   </div>
 </div>
 
@@ -673,41 +732,240 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape" && document.getE
    opens in a modal widget. */
 function openFoodModal(){
   document.getElementById("foodModal").classList.add("show");
-  fitFoodFrame();
-  /* v53: the widget renders while hidden (zero width) — re-apply card spacers once visible */
+  /* v54: widget is inlined — re-apply card spacers once visible (zero width while hidden) */
   setTimeout(function(){
-    try{
-      var f = document.getElementById("foodFrame");
-      if(f && f.contentWindow && f.contentWindow.applyRowSpacers) f.contentWindow.applyRowSpacers();
-    }catch(e){}
-    fitFoodFrame();
+    try{ if(window.wApplyRowSpacers) window.wApplyRowSpacers(); }catch(e){}
   }, 80);
 }
 function closeFoodModal(){ document.getElementById("foodModal").classList.remove("show"); }
-/* v48: size the menu widget iframe to its content height (same origin, no CORS issue).
-   Called on open, on iframe load, and a few times after (images load async). */
-function fitFoodFrame(){
-  var f = document.getElementById("foodFrame");
-  if(!f) return;
-  try{
-    var doc = f.contentDocument || (f.contentWindow && f.contentWindow.document);
-    if(!doc || !doc.body) return;
-    var de = doc.documentElement;
-    var h = Math.max(doc.body.scrollHeight, de ? de.scrollHeight : 0);
-    if(h > 120) f.style.height = h + "px";
-  }catch(e){ /* ignore */ }
-}
+/* v54: inlined menu widget (was menu-widget.html iframe) */
+
 (function(){
-  var f = document.getElementById("foodFrame");
-  if(!f) return;
-  /* v50: cache-bust the widget on every app version — the old iPad caches aggressively */
-  try{ f.src = "menu-widget.html?v=" + currentAppVer(); }catch(e){}
-  f.addEventListener("load", function(){
-    fitFoodFrame();
-    var n = 0;
-    var iv = setInterval(function(){ fitFoodFrame(); if(++n >= 20) clearInterval(iv); }, 500);
-  });
+  var IMG = "https://meal-planner-daily.vercel.app/meals/";
+  /* v48: hand-drawn breakfast icon (fried egg) — the waffle emoji does not
+     exist on old iOS and renders as a weird glyph */
+  var ICO_BREAKFAST = '<svg viewBox="0 0 24 24" style="width:22px;height:22px;vertical-align:-4px">' +
+    '<path d="M12 2.8c-4.2 0-7.8 3.8-7.8 9.2s3.6 9.2 7.8 9.2 7.8-4 7.8-9.2S16.2 2.8 12 2.8z" fill="#ffffff" stroke="#D1D5DB" stroke-width="1"/>' +
+    '<circle cx="12" cy="12" r="4.4" fill="#FFB300"/></svg>';
+  var SLOTS = [
+    {id:"breakfast", uk:"Сніданок", en:"Breakfast", emoji:ICO_BREAKFAST, options:[
+      {id:"waffles-maple", uk:"Вафлі з кленовим сиропом", en:"Waffles with maple syrup", img:"waffles-maple.jpg"},
+      {id:"toast-nutella", uk:"Тост з нутеллою", en:"Toast with Nutella", img:"toast-nutella.jpg"},
+      {id:"english-muffin-sausage", uk:"Англійський мафін із сніданковою сосискою", en:"English muffin with breakfast sausage", img:"english-muffin-sausage.jpg"}
+    ]},
+    {id:"lunch", uk:"Обід", en:"Lunch", emoji:"🌮", options:[
+      {id:"tacos-beef", uk:"Такос з фаршем", en:"Beef tacos", img:"tacos-beef.jpg"},
+      {id:"butter-chicken-rice", uk:"Батер чікен з рисом", en:"Butter chicken with rice", img:"butter-chicken-rice.jpg"},
+      {id:"chicken-noodle-soup", uk:"Курячий суп з локшиною", en:"Chicken noodle soup", img:"chicken-noodle-soup.jpg"}
+    ]},
+    {id:"dinner", uk:"Вечеря", en:"Dinner", emoji:"🍝", options:[
+      {id:"pasta-pesto", uk:"Макарони з зеленим песто", en:"Pasta with green pesto", img:"pasta-pesto.jpg"},
+      {id:"burrito-beef", uk:"Буріто з мʼясом", en:"Beef burrito", img:"burrito-beef.jpg"},
+      {id:"veg-chili", uk:"Вегетаріанське чилі", en:"Vegetarian chili", img:"veg-chili.jpg"}
+    ]}
+  ];
+  var PROFILES = [
+    {id:"Tato", uk:"Tato", en:"Dad", color:"#84CC16"},
+    {id:"Alek", uk:"Alek", en:"Alek", color:"#FF7A45"},
+    {id:"Марк", uk:"Марк", en:"Mark", color:"#38BDF8"}
+  ];
+  var DAYS = [
+    {id:"mon", uk:"Пн", en:"Mon"}, {id:"tue", uk:"Вт", en:"Tue"},
+    {id:"wed", uk:"Ср", en:"Wed"}, {id:"thu", uk:"Чт", en:"Thu"},
+    {id:"fri", uk:"Пт", en:"Fri"}, {id:"sat", uk:"Сб", en:"Sat"},
+    {id:"sun", uk:"Нд", en:"Sun"}
+  ];
+  var LS_CHOICES = "menu-widget-choices-v1", LS_LANG = "menu-widget-lang-v1";
+
+  var state = { lang:"uk", day:"mon", profile:"Tato", choices:{} };
+
+  function load(){
+    try{
+      var c = localStorage.getItem(LS_CHOICES);
+      if(c) state.choices = JSON.parse(c);
+      var l = localStorage.getItem(LS_LANG);
+      if(l === "uk" || l === "en") state.lang = l;
+    }catch(e){}
+  }
+  function save(){
+    try{ localStorage.setItem(LS_CHOICES, JSON.stringify(state.choices)); }catch(e){}
+  }
+  function saveLang(){
+    try{ localStorage.setItem(LS_LANG, state.lang); }catch(e){}
+  }
+  function T(uk, en){ return state.lang === "uk" ? uk : en; }
+  function esc(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function getChoice(day, profile, slotId){
+    return (state.choices[day] && state.choices[day][profile] && state.choices[day][profile][slotId]) || null;
+  }
+  function setChoice(day, profile, slotId, mealId){
+    if(!state.choices[day]) state.choices[day] = {};
+    if(!state.choices[day][profile]) state.choices[day][profile] = {};
+    state.choices[day][profile][slotId] = mealId;
+    save();
+  }
+  function profileById(id){
+    for(var i=0;i<PROFILES.length;i++) if(PROFILES[i].id===id) return PROFILES[i];
+    return PROFILES[0];
+  }
+
+  function renderProfiles(){
+    var html = "";
+    for(var i=0;i<PROFILES.length;i++){
+      var p = PROFILES[i];
+      var on = state.profile === p.id;
+      html += '<button class="pchip' + (on ? " on" : "") + '" data-p="' + p.id + '"' +
+        (on ? ' style="background:' + p.color + '"' : "") + '>' + esc(T(p.uk, p.en)) + "</button>";
+    }
+    document.getElementById("wProfiles").innerHTML = html;
+    var btns = document.getElementById("wProfiles").getElementsByClassName("wPchip");
+    for(var j=0;j<btns.length;j++){
+      btns[j].onclick = function(){ state.profile = this.getAttribute("data-p"); render(); };
+    }
+  }
+  function renderDays(){
+    var html = "";
+    for(var i=0;i<DAYS.length;i++){
+      var d = DAYS[i];
+      html += '<button class="dchip' + (state.day===d.id ? " on" : "") + '" data-d="' + d.id + '">' +
+        esc(T(d.uk, d.en)) + "</button>";
+    }
+    document.getElementById("wDays").innerHTML = html;
+    var btns = document.getElementById("wDays").getElementsByClassName("wDchip");
+    for(var j=0;j<btns.length;j++){
+      btns[j].onclick = function(){ state.day = this.getAttribute("data-d"); render(); };
+    }
+  }
+  function renderSlots(){
+    var html = "";
+    for(var s=0;s<SLOTS.length;s++){
+      var slot = SLOTS[s];
+      html += '<div class="wSlot"><div class="wSlotTitle">' + slot.emoji + " " + esc(T(slot.uk, slot.en)) + "</div>" +
+        '<div class="wRow" data-slot="' + slot.id + '">';
+      for(var o=0;o<slot.options.length;o++){
+        var m = slot.options[o];
+        var chosen = getChoice(state.day, state.profile, slot.id) === m.id;
+        html += '<div class="wCard' + (chosen ? " on" : "") + '" data-s="' + slot.id + '" data-m="' + m.id + '">' +
+          '<div class="wCk">✓</div>' +
+          '<div class="wImgwrap"><img src="' + IMG + m.img + '" alt=""></div>' +
+          '<div class="wNm">' + esc(T(m.uk, m.en)) + "</div></div>";
+      }
+      html += "</div></div>";
+    }
+    document.getElementById("wSlots").innerHTML = html;
+    var box = document.getElementById("wSlots");
+    var cards = box.getElementsByClassName("wCard");
+    for(var c=0;c<cards.length;c++){
+      cards[c].onclick = function(){
+        /* v52: tap selects exactly the tapped card — no programmatic scroll,
+           so auto-select can't override the choice (Iryna 09.10.2026) */
+        selectCard(this);
+      };
+    }
+    var rows = box.getElementsByClassName("wRow");
+    for(var r=0;r<rows.length;r++){
+      (function(row){
+        row.onscroll = function(){
+          var key = row.getAttribute("data-slot");
+          if(scrollTimers[key]) clearTimeout(scrollTimers[key]);
+          scrollTimers[key] = setTimeout(autoSelectFromScroll, 160);
+        };
+      })(rows[r]);
+    }
+    applyRowSpacers();
+  }
+  function selectCard(card){
+    setChoice(state.day, state.profile, card.getAttribute("data-s"), card.getAttribute("data-m"));
+    var cs = card.parentNode.getElementsByClassName("wCard");
+    for(var i=0;i<cs.length;i++) cs[i].className = "wCard" + (cs[i] === card ? " on" : "");
+    renderSummary();
+  }
+  /* v51: only a TRAILING spacer — a leading one made cards jump right on open
+     and fought the snap (Iryna 09.10.2026) */
+  function applyRowSpacers(){
+    var rows = document.getElementById("wSlots").getElementsByClassName("wRow");
+    for(var r=0;r<rows.length;r++){
+      var row = rows[r];
+      var cards = row.getElementsByClassName("wCard");
+      if(!cards.length) continue;
+      var sp = Math.max(0, (row.clientWidth - cards[0].offsetWidth) / 2);
+      cards[0].style.marginLeft = "";
+      cards[cards.length-1].style.marginRight = sp + "px";
+    }
+  }
+  /* v53: exposed so the parent page can re-apply spacers when the modal opens
+     (the widget renders while hidden, with zero width) */
+  window.wApplyRowSpacers = applyRowSpacers;
+  /* v49: whichever card is centered becomes the active profile's choice,
+     summary text updates live (Iryna 09.10.2026) */
+  var scrollTimers = {};
+  function centeredCard(row){
+    var rr = row.getBoundingClientRect();
+    var mid = rr.left + rr.width / 2;
+    var cards = row.getElementsByClassName("wCard");
+    var best = null, bestDist = 1e9;
+    for(var i=0;i<cards.length;i++){
+      var cr = cards[i].getBoundingClientRect();
+      var d = Math.abs((cr.left + cr.width / 2) - mid);
+      if(d < bestDist){ bestDist = d; best = cards[i]; }
+    }
+    return best;
+  }
+  function autoSelectFromScroll(){
+    var rows = document.getElementById("wSlots").getElementsByClassName("wRow");
+    for(var r=0;r<rows.length;r++){
+      var row = rows[r];
+      var slotId = row.getAttribute("data-slot");
+      var card = centeredCard(row);
+      if(!card) continue;
+      if(getChoice(state.day, state.profile, slotId) !== card.getAttribute("data-m")){
+        selectCard(card);
+      }
+    }
+  }
+  function mealName(slotId, mealId){
+    for(var s=0;s<SLOTS.length;s++){
+      if(SLOTS[s].id !== slotId) continue;
+      for(var o=0;o<SLOTS[s].options.length;o++){
+        if(SLOTS[s].options[o].id === mealId) return T(SLOTS[s].options[o].uk, SLOTS[s].options[o].en);
+      }
+    }
+    return "—";
+  }
+  function renderSummary(){
+    var dayName = "";
+    for(var i=0;i<DAYS.length;i++) if(DAYS[i].id===state.day) dayName = T(DAYS[i].uk, DAYS[i].en);
+    var html = "<h3>" + esc(T("Вибір на ", "Choices for ") + dayName) + "</h3>";
+    for(var p=0;p<PROFILES.length;p++){
+      var pr = PROFILES[p];
+      var parts = [];
+      for(var s=0;s<SLOTS.length;s++){
+        parts.push(mealName(SLOTS[s].id, getChoice(state.day, pr.id, SLOTS[s].id)));
+      }
+      html += '<div class="ln"><b>' + esc(T(pr.uk, pr.en)) + ":</b> " + esc(parts.join(" • ")) + "</div>";
+    }
+    document.getElementById("wSummary").innerHTML = html;
+  }
+  function render(){
+    document.getElementById("wLangBtn").textContent = state.lang === "uk" ? "EN" : "УКР";
+    renderProfiles();
+    renderDays();
+    renderSlots();
+    renderSummary();
+  }
+  document.getElementById("wLangBtn").onclick = function(){
+    state.lang = state.lang === "uk" ? "en" : "uk";
+    saveLang();
+    render();
+  };
+  window.addEventListener("resize", function(){ applyRowSpacers(); });
+  load();
+  render();
 })();
+
+
 document.getElementById("foodBtn").onclick = openFoodModal;
 document.getElementById("foodX").onclick = closeFoodModal;
 document.getElementById("foodModal").addEventListener("click", e=>{ if(e.target === document.getElementById("foodModal")) closeFoodModal(); });
