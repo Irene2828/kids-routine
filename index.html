@@ -308,6 +308,14 @@
     box-shadow:0 4px 16px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
   }
   #factBtn:active{transform:scale(.92);}
+  #langBtn{
+    position:absolute; left:66px; bottom:calc(env(safe-area-inset-bottom) + 22px); z-index:11;
+    height:46px; min-width:46px; padding:0 10px; border:none; border-radius:23px; cursor:pointer;
+    background:rgba(20,20,22,.45); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+    font-size:14px; font-weight:800; line-height:46px; color:#fff; text-align:center;
+    box-shadow:0 4px 16px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  #langBtn:active{transform:scale(.92);}
   #factCard{
     position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom) + 88px); z-index:12;
     max-width:min(320px, calc(100vw - 24px));
@@ -511,8 +519,9 @@
   <button id="foodBtn" class="stageIcon" title="Меню">🍽️</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 55 • 09.10.2026</div>
+  <div id="verChip">версія 56 • 22.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
+  <button id="langBtn" title="Мова / Language">EN</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
 </div>
 <div id="app">
@@ -533,7 +542,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 55 • 09.10.2026</div>
+<div class="ver">версія 56 • 22.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -613,6 +622,75 @@
 
 <script>
 "use strict";
+/* ---------- i18n (v56, 22.10.2026): EN/UKR toggle next to the 💡 button.
+   LANG persists per device; the menu widget follows via window.wSetLang.
+   User data (alarm names etc.) is never rewritten — only known built-in
+   names get a display translation via dispName(). */
+var LANG = "uk";
+try{ var _lsLang = localStorage.getItem("kidsRoutine.lang.v1"); if(_lsLang === "en" || _lsLang === "uk") LANG = _lsLang; }catch(e){}
+function tr(uk, en){ return LANG === "en" ? en : uk; }
+var MON_FULL = { uk:["січень","лютий","березень","квітень","травень","червень","липень","серпень","вересень","жовтень","листопад","грудень"],
+                 en:["January","February","March","April","May","June","July","August","September","October","November","December"] };
+var MON_GEN = { uk:["січня","лютого","березня","квітня","травня","червня","липня","серпня","вересня","жовтня","листопада","грудня"],
+                en:["January","February","March","April","May","June","July","August","September","October","November","December"] };
+var DOW_FULL = { uk:["неділя","понеділок","вівторок","середа","четвер","пʼятниця","субота"],
+                 en:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"] };
+var DOW_SHORT = { uk:["Нд","Пн","Вт","Ср","Чт","Пт","Сб"], en:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"] };
+var NAME_EN = { "Підйом":"Wake up", "Сніданок":"Breakfast", "Прогулянка":"Walk", "Обід":"Lunch",
+  "Тиха година":"Quiet time", "Полуденок":"Snack", "Вечеря":"Dinner", "Сон":"Bedtime",
+  "День народження Марчика":"Marchyk's Birthday", "День народження Алека":"Alek's Birthday",
+  "Будильник":"Alarm", "Новий будильник":"New alarm", "Нова подія":"New event" };
+function dispName(n){ if(LANG === "en" && n && NAME_EN[n]) return NAME_EN[n]; return n; }
+function applyI18n(){
+  document.title = tr("Режим дня ☀️", "Daily Routine ☀️");
+  document.documentElement.lang = LANG;
+  var h1 = document.querySelector("#app h1"); if(h1) h1.textContent = tr("☀️ Режим дня", "☀️ Daily Routine");
+  var lb = document.getElementById("langBtn"); if(lb) lb.textContent = LANG === "uk" ? "EN" : "УКР";
+  var fb = document.getElementById("factBtn"); if(fb) fb.title = tr("Факти дня", "Facts of the day");
+  var ft = document.querySelector("#factCard .factTitle"); if(ft) ft.textContent = tr("Дивовижні факти дня 💡", "Amazing facts of the day 💡");
+  var ftm = document.querySelector("#factCard .factTomorrow"); if(ftm) ftm.textContent = tr("До завтра — будуть нові факти!", "See you tomorrow — new facts are coming!");
+  var gb = document.getElementById("gearBtn"); if(gb) gb.title = tr("Розклад", "Schedule");
+  var fdb = document.getElementById("foodBtn"); if(fdb) fdb.title = tr("Меню", "Menu");
+  var cb = document.getElementById("calBtn"); if(cb) cb.title = tr("Календар", "Calendar");
+  var sb = document.getElementById("schoolBtn"); if(sb) sb.title = tr("Школа", "School");
+  var nu = document.querySelector("#nextUp .t1"); if(nu) nu.textContent = tr("Далі за розкладом", "Up next");
+  var ca = document.getElementById("calAdd"); if(ca) ca.title = tr("Додати подію", "Add event");
+  var cx = document.getElementById("calX"); if(cx) cx.title = tr("Закрити", "Close");
+  var fx = document.getElementById("foodX"); if(fx) fx.title = tr("Закрити", "Close");
+  var fdt = document.getElementById("foodTitle"); if(fdt) fdt.textContent = tr("🍽️ Меню дня", "🍽️ Today's Menu");
+  var ap = document.querySelector("#alarm p"); if(ap) ap.textContent = tr("Час настав! 🎉", "It's time! 🎉");
+  var ad = document.getElementById("alarmDone"); if(ad) ad.textContent = tr("Готово! ✅", "Done! ✅");
+  var ts = document.getElementById("tabSched"); if(ts) ts.textContent = tr("Розклад", "Schedule");
+  var tp = document.getElementById("tabPhoto"); if(tp) tp.textContent = tr("Фото", "Photos");
+  var px = document.getElementById("panelX"); if(px) px.setAttribute("aria-label", tr("Закрити", "Close"));
+  var ab = document.getElementById("addAlarmBtn"); if(ab) ab.title = tr("Додати будильник", "Add alarm");
+  var ph = document.querySelector("#tabPhotoBody h3"); if(ph) ph.textContent = tr("Фото для слайдшоу", "Slideshow photos");
+  var up = document.querySelector("#tabPhotoBody .uploadLbl"); if(up && up.childNodes[0]) up.childNodes[0].textContent = tr("＋ Додати фото", "＋ Add photo");
+  var pr = document.getElementById("photoReset"); if(pr){ pr.innerHTML = tr("↩️ Приховані", "↩️ Hidden"); pr.title = tr("Показати знову приховані фото", "Show hidden photos again"); }
+  var si = document.getElementById("slideInt");
+  if(si){
+    if(si.previousElementSibling) si.previousElementSibling.textContent = tr("🔁 Зміна фото кожні:", "🔁 Change photo every:");
+    var ot = [tr("15 секунд","15 seconds"), tr("1 хвилина","1 minute"), tr("15 хвилин","15 minutes"), tr("1 година","1 hour"), tr("Вимкнено","Off")];
+    for(var i = 0; i < si.options.length && i < ot.length; i++) si.options[i].text = ot[i];
+  }
+  var hint = document.querySelector("#tabPhotoBody .phint"); if(hint) hint.textContent = tr("💡 Фото й налаштування зберігаються лише на цьому пристрої — керуй ними з планшета.", "💡 Photos and settings are stored only on this device — manage them from the tablet.");
+}
+function krSetLang(l){
+  LANG = l;
+  try{ localStorage.setItem("kidsRoutine.lang.v1", l); }catch(e){}
+  applyI18n();
+  if(window.wSetLang) window.wSetLang(l);
+  try{ factList = null; ensureFacts(); }catch(e){}
+  var fc = document.getElementById("factCard"); if(fc) fc.classList.remove("show");
+  try{ tickClock(); }catch(e){}
+  try{ renderList(); }catch(e){}
+  try{ renderSched(); }catch(e){}
+  try{ if(document.getElementById("calModal").classList.contains("show")) renderCalBody(); }catch(e){}
+  try{ cdPageShown = -2; renderStageClock(); }catch(e){}
+  try{ loadTicker(); }catch(e){}
+}
+window.krToggleLang = function(){ krSetLang(LANG === "uk" ? "en" : "uk"); };
+
 /* Aquamarine play icons (inline SVG — crisp on old iOS too) */
 const PLAY_SVG='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M8 5v14l11-7z" fill="#fff"/></svg>';
 const PLAY_SVG_SM='<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M8 5v14l11-7z" fill="#101014"/></svg>';
@@ -712,11 +790,11 @@ function openCalModal(mode){
   if(mode === "calendar"){
     calVY = now.getFullYear(); calVM = now.getMonth() + 1;
     calSel = evKey(now.getFullYear(), now.getMonth()+1, now.getDate());
-    $("calTitle").textContent = "📅 Календар";
+    $("calTitle").textContent = tr("📅 Календар", "📅 Calendar");
     $("calAdd").style.display = "";
   }else{
     sclDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    $("calTitle").textContent = "🏫 Школа";
+    $("calTitle").textContent = tr("🏫 Школа", "🏫 School");
     $("calAdd").style.display = "none";
   }
   renderCalBody();
@@ -962,8 +1040,13 @@ function closeFoodModal(){ document.getElementById("foodModal").classList.remove
     renderSummary();
   }
   document.getElementById("wLangBtn").onclick = function(){
+    if(window.krToggleLang){ window.krToggleLang(); return; }
     state.lang = state.lang === "uk" ? "en" : "uk";
     saveLang();
+    render();
+  };
+  window.wSetLang = function(l){
+    if(l === "uk" || l === "en"){ state.lang = l; saveLang(); }
     render();
   };
   window.addEventListener("resize", function(){ applyRowSpacers(); });
@@ -978,7 +1061,7 @@ document.getElementById("foodModal").addEventListener("click", e=>{ if(e.target 
 document.addEventListener("keydown", e=>{ if(e.key === "Escape" && document.getElementById("foodModal").classList.contains("show")) closeFoodModal(); });
 document.getElementById("calAdd").onclick = ()=>{
   const p = calSel.split("-").map(Number);
-  const e = {id:"c"+Date.now(), name:"Нова подія", emoji:"✨", y:p[0], m:p[1], d:p[2], yearly:false};
+  const e = {id:"c"+Date.now(), name:tr("Нова подія", "New event"), emoji:"✨", y:p[0], m:p[1], d:p[2], yearly:false};
   calEvents.push(e); saveCal(); renderCalBody();
   const row = document.querySelector('.cev[data-id="'+e.id+'"] .ce-name');
   if(row) calInlineEdit(row, e.name, v=>{ v = v.trim(); if(v) e.name = v; saveCal(); renderCalBody(); });
@@ -1035,7 +1118,7 @@ function renderCalBody(){
   const today = new Date();
   const tKey = evKey(today.getFullYear(), today.getMonth()+1, today.getDate());
   let cells = "";
-  ["Пн","Вт","Ср","Чт","Пт","Сб","Нд"].forEach(d=>{ cells += '<div class="cdow">'+d+'</div>'; });
+  (LANG === "en" ? ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"] : ["Пн","Вт","Ср","Чт","Пт","Сб","Нд"]).forEach(d=>{ cells += '<div class="cdow">'+d+'</div>'; });
   for(let i = lead; i > 0; i--) cells += '<button class="cday dim" data-nav="-1">'+(prevDim - i + 1)+'</button>';
   for(let d = 1; d <= dim; d++){
     const k = evKey(y,m,d);
@@ -1050,21 +1133,21 @@ function renderCalBody(){
   const sp = calSel.split("-").map(Number);
   const evs = calEventsOn(sp[0], sp[1], sp[2]);
   const p2 = n => String(n).padStart(2,"0");
-  let evHtml = '<div id="calEvTitle">'+sp[2]+' '+MON_UA[sp[1]-1]+' • '+DOW_UA[new Date(sp[0],sp[1]-1,sp[2]).getDay()]+'</div>';
-  if(!evs.length) evHtml += '<div class="ce-empty">Поки порожньо — натисни + щоб додати ✨</div>';
+  let evHtml = '<div id="calEvTitle">'+sp[2]+' '+MON_FULL[LANG][sp[1]-1]+' • '+DOW_FULL[LANG][new Date(sp[0],sp[1]-1,sp[2]).getDay()]+'</div>';
+  if(!evs.length) evHtml += '<div class="ce-empty">' + tr("Поки порожньо — натисни + щоб додати ✨", "Nothing here yet — tap + to add ✨") + '</div>';
   evs.forEach(e=>{
-    const dateLbl = e.yearly ? (e.d+"."+p2(e.m)+" • щороку") : (e.d+"."+p2(e.m)+"."+e.y);
+    const dateLbl = e.yearly ? (e.d+"."+p2(e.m)+tr(" • щороку", " • yearly")) : (e.d+"."+p2(e.m)+"."+e.y);
     evHtml += '<div class="cev" data-id="'+e.id+'">'+
-      '<div class="ce-emo" title="Змінити іконку">'+escapeHtml(e.emoji||"✨")+'</div>'+
-      '<div class="ce-main"><div class="ce-name">'+escapeHtml(e.name)+'</div>'+
-      '<div class="ce-date" title="Змінити дату">'+escapeHtml(dateLbl)+'</div></div>'+
-      '<button class="ce-rep'+(e.yearly?" on":"")+'" title="Щороку / разово">🔁</button>'+
-      '<button class="ce-del" title="Видалити">✕</button></div>';
+      '<div class="ce-emo" title="' + tr("Змінити іконку", "Change icon") + '">'+escapeHtml(e.emoji||"✨")+'</div>'+
+      '<div class="ce-main"><div class="ce-name">'+escapeHtml(dispName(e.name))+'</div>'+
+      '<div class="ce-date" title="' + tr("Змінити дату", "Change date") + '">'+escapeHtml(dateLbl)+'</div></div>'+
+      '<button class="ce-rep'+(e.yearly?" on":"")+'" title="' + tr("Щороку / разово", "Yearly / one-time") + '">🔁</button>'+
+      '<button class="ce-del" title="' + tr("Видалити", "Delete") + '">✕</button></div>';
   });
   body.innerHTML =
-    '<div id="calNav"><button id="calPrev">‹</button><div class="mname">'+MON_UA[m-1]+' '+y+'</div><button id="calNext">›</button></div>'+
+    '<div id="calNav"><button id="calPrev">‹</button><div class="mname">'+MON_FULL[LANG][m-1]+' '+y+'</div><button id="calNext">›</button></div>'+
     '<div id="calGrid">'+cells+'</div>'+ evHtml +
-    '<div class="ce-hint">Натисни на подію, щоб змінити назву чи дату. 🔁 — повторювати щороку.</div>';
+    '<div class="ce-hint">' + tr("Натисни на подію, щоб змінити назву чи дату. 🔁 — повторювати щороку.", "Tap an event to change its name or date. 🔁 — repeat every year.") + '</div>';
   $("calPrev").onclick = ()=>{ calVM--; if(calVM<1){calVM=12; calVY--;} renderCalBody(); };
   $("calNext").onclick = ()=>{ calVM++; if(calVM>12){calVM=1; calVY++;} renderCalBody(); };
   body.querySelectorAll(".cday[data-day]").forEach(b=>{
@@ -1158,7 +1241,7 @@ function renderSchool(body){
     '<button id="sclNext">›</button></div>';
   const lessons = SCHOOL[dow];
   if(!lessons){
-    html += '<div class="ce-empty">Вихідні! Школи немає 🎉</div>';
+    html += '<div class="ce-empty">' + tr("Вихідні! Школи немає 🎉", "Weekend! No school 🎉") + '</div>';
   }else{
     const now = new Date();
     const isToday = d.toDateString() === now.toDateString();
@@ -1169,7 +1252,7 @@ function renderSchool(body){
       const isNow = isToday && nowMin >= tm(r[0]) && nowMin < tm(r[1]);
       html += '<div class="scl'+(isNow?" now":"")+'"><div class="t">'+L[0]+'</div>'+
         '<div class="e">'+L[2]+'</div><div class="n">'+escapeHtml(L[1])+'</div>'+
-        (isNow ? '<div class="nowtag">ЗАРАЗ</div>' : "")+'</div>';
+        (isNow ? '<div class="nowtag">' + tr("ЗАРАЗ", "NOW") + '</div>' : "")+'</div>';
     });
   }
   body.innerHTML = html;
@@ -1270,8 +1353,8 @@ function nowHM(){ const d=new Date(); return String(d.getHours()).padStart(2,"0"
 function tickClock(){
   const d = new Date();
   $("clock").textContent = nowHM();
-  const days=["неділя","понеділок","вівторок","середа","четвер","пʼятниця","субота"];
-  const mon=["січня","лютого","березня","квітня","травня","червня","липня","серпня","вересня","жовтня","листопада","грудня"];
+  const days=DOW_FULL[LANG];
+  const mon=MON_GEN[LANG];
   $("dateLine").textContent = days[d.getDay()]+", "+d.getDate()+" "+mon[d.getMonth()];
 }
 function sortedEvents(){ return [...events].sort((a,b)=> a.time < b.time ? -1 : 1); }
@@ -1286,12 +1369,12 @@ function isEnabled(ev){ return !ev || ev.enabled !== false; }
 function daysLabel(ev){
   const d = eventDays(ev).slice().sort((a,b)=>a-b);
   const same = function(arr){ return d.length===arr.length && d.every(function(x,i){ return x===arr[i]; }); };
-  if(same([0,1,2,3,4,5,6])) return "щодня";
-  if(same([1,2,3,4,5])) return "щобудня";
-  if(same([0,6])) return "щовихідних";
-  const names = ["щонеділі","щопонеділка","щовівторка","щосереди","щочетверга","щопʼятниці","щосуботи"];
+  if(same([0,1,2,3,4,5,6])) return tr("щодня", "every day");
+  if(same([1,2,3,4,5])) return tr("щобудня", "weekdays");
+  if(same([0,6])) return tr("щовихідних", "weekends");
+  const names = LANG === "en" ? ["Sundays","Mondays","Tuesdays","Wednesdays","Thursdays","Fridays","Saturdays"] : ["щонеділі","щопонеділка","щовівторка","щосереди","щочетверга","щопʼятниці","щосуботи"];
   if(d.length === 1) return names[d[0]];
-  const short = ["Нд","Пн","Вт","Ср","Чт","Пт","Сб"];
+  const short = DOW_SHORT[LANG];
   return [1,2,3,4,5,6,0].filter(x=>d.indexOf(x)>=0).map(x=>short[x]).join(", ");
 }
 function renderList(){
@@ -1305,21 +1388,21 @@ function renderList(){
     if(isNext) nextEv = ev;
     const div = document.createElement("div");
     div.className = "ev"+(done?" done":"")+(!active?" off":"")+(isNext?" next":"");
-    const badge = !active ? daysLabel(ev) : (done ? "✅" : (isNext ? "Далі" : "⏳"));
+    const badge = !active ? daysLabel(ev) : (done ? "✅" : (isNext ? tr("Далі", "Next") : "⏳"));
     div.innerHTML =
       '<div class="emo">'+escapeHtml(ev.emoji||"⏰")+'</div>'+
-      '<div class="info"><div class="name">'+escapeHtml(ev.name)+'</div>'+
+      '<div class="info"><div class="name">'+escapeHtml(dispName(ev.name))+'</div>'+
       '<div class="time">'+escapeHtml(ev.time)+' • '+escapeHtml(daysLabel(ev))+'</div></div>'+
       '<div class="badge">'+badge+'</div>'+
-      '<button class="play" title="Послухати звук">'+PLAY_SVG+'</button>';
+      '<button class="play" title="' + tr("Послухати звук", "Play sound") + '">'+PLAY_SVG+'</button>';
     div.querySelector(".play").onclick = ()=> playSound(ev);
     list.appendChild(div);
   });
   if(nextEv){
     $("nextUp").style.display = "flex";
     $("nuEmo").textContent = nextEv.emoji || "⏰";
-    $("nuName").textContent = nextEv.name;
-    $("nuTime").textContent = "о "+nextEv.time;
+    $("nuName").textContent = dispName(nextEv.name);
+    $("nuTime").textContent = tr("о ", "at ") + nextEv.time;
   } else {
     $("nextUp").style.display = "none";
   }
@@ -1362,7 +1445,7 @@ function fireAlarm(ev){
   if(alarmTimer){ clearTimeout(alarmTimer); alarmTimer = null; }
   currentAlarm = ev;
   $("alarmEmo").textContent = ev.emoji || "⏰";
-  $("alarmName").textContent = ev.name + "!";
+  $("alarmName").textContent = dispName(ev.name) + "!";
   $("alarm").classList.add("show");
   renderStageClock();
   renderList();
@@ -1413,12 +1496,13 @@ function setTab(t){
 }
 function soundOptsHTML(ev){
   return Object.keys(SOUNDS).map(k=>
-    '<option value="'+k+'"'+(ev.sound===k?" selected":"")+'>'+SOUNDS[k].label+'</option>').join("");
+    '<option value="'+k+'"'+(ev.sound===k?" selected":"")+'>'+(LANG === "en" && SOUND_EN[k] ? SOUND_EN[k] : SOUNDS[k].label)+'</option>').join("");
 }
+const SOUND_EN = { sunrise:"🌅 Wake-up", yummy:"😋 Yummy", play:"🤸 Play", sleep:"💤 Lullaby", fanfare:"🎺 Fanfare" };
 const EMO_SET = ["☀️","🥣","🌳","🍲","😴","🍎","🍽️","🌙","🚿","📚","🎨","⚽","🧸","🦷","👕","⭐","⏰"];
 function dayChipsHTML(ev){
   const days = eventDays(ev);
-  const labels = [["Пн",1],["Вт",2],["Ср",3],["Чт",4],["Пт",5],["Сб",6],["Нд",0]];
+  const labels = LANG === "en" ? [["Mon",1],["Tue",2],["Wed",3],["Thu",4],["Fri",5],["Sat",6],["Sun",0]] : [["Пн",1],["Вт",2],["Ср",3],["Чт",4],["Пт",5],["Сб",6],["Нд",0]];
   return labels.map(function(ld){
     return '<button class="chip'+(days.indexOf(ld[1])>=0?" on":"")+'" data-day="'+ld[1]+'">'+ld[0]+'</button>';
   }).join("");
@@ -1438,7 +1522,7 @@ function inlineTextEdit(el, value, commit){
 }
 function dayListHTML(ev){
   const days = eventDays(ev);
-  const labels = [["Понеділок",1],["Вівторок",2],["Середа",3],["Четвер",4],["Пʼятниця",5],["Субота",6],["Неділя",0]];
+  const labels = LANG === "en" ? [["Monday",1],["Tuesday",2],["Wednesday",3],["Thursday",4],["Friday",5],["Saturday",6],["Sunday",0]] : [["Понеділок",1],["Вівторок",2],["Середа",3],["Четвер",4],["Пʼятниця",5],["Субота",6],["Неділя",0]];
   return labels.map(function(ld){
     return '<button class="dayrow'+(days.indexOf(ld[1])>=0?" on":"")+'" data-day="'+ld[1]+'">'+
       '<span>'+ld[0]+'</span><span class="tick">✓</span></button>';
@@ -1551,24 +1635,24 @@ function renderSched(){
     const open = schedOpenId === ev.id;
     row.innerHTML =
       '<div class="stop">'+
-        '<div class="semo" title="Змінити іконку">'+escapeHtml(ev.emoji||"⏰")+'</div>'+
+        '<div class="semo" title="' + tr("Змінити іконку", "Change icon") + '">'+escapeHtml(ev.emoji||"⏰")+'</div>'+
         '<div class="smain">'+
-          '<div class="stime" title="Торкнись, щоб змінити час">'+escapeHtml(ev.time)+'</div>'+
-          '<div class="sname" title="Торкнись, щоб змінити назву">'+escapeHtml(ev.name||"Будильник")+'</div>'+
-          '<div class="srep" title="Повторення">'+escapeHtml(daysLabel(ev))+' ›</div>'+
+          '<div class="stime" title="' + tr("Торкнись, щоб змінити час", "Tap to change the time") + '">'+escapeHtml(ev.time)+'</div>'+
+          '<div class="sname" title="' + tr("Торкнись, щоб змінити назву", "Tap to change the name") + '">'+escapeHtml(dispName(ev.name||"Будильник"))+'</div>'+
+          '<div class="srep" title="' + tr("Повторення", "Repeat") + '">'+escapeHtml(daysLabel(ev))+' ›</div>'+
         '</div>'+
-        '<button class="sswitch'+(isEnabled(ev)?" on":"")+'" aria-label="Увімкнути або вимкнути"><span></span></button>'+
+        '<button class="sswitch'+(isEnabled(ev)?" on":"")+'" aria-label="' + tr("Увімкнути або вимкнути", "Turn on or off") + '"><span></span></button>'+
       '</div>'+
       '<div class="sexp" style="display:'+(open?"block":"none")+'">'+
         '<div class="daylist">'+dayListHTML(ev)+'</div>'+
         '<div class="soundRow">'+
-          '<label>Звук:</label>'+
+          '<label>' + tr("Звук:", "Sound:") + '</label>'+
           '<select class="ssound">'+soundOptsHTML(ev)+'</select>'+
-          '<button class="iconBtn playMini splay" title="Послухати">'+PLAY_SVG_SM+'</button>'+
-          '<label class="uploadLbl">＋ Свій звук<input type="file" accept="audio/*" class="sfile"></label>'+
+          '<button class="iconBtn playMini splay" title="' + tr("Послухати", "Listen") + '">'+PLAY_SVG_SM+'</button>'+
+          '<label class="uploadLbl">' + tr("＋ Свій звук", "＋ Custom sound") + '<input type="file" accept="audio/*" class="sfile"></label>'+
         '</div>'+
-        (ev.customSound ? '<div class="phint">✅ Свій звук завантажено</div>' : '')+
-        '<button class="sdel">Видалити</button>'+
+        (ev.customSound ? '<div class="phint">' + tr("✅ Свій звук завантажено", "✅ Custom sound uploaded") + '</div>' : '')+
+        '<button class="sdel">' + tr("Видалити", "Delete") + '</button>'+
       '</div>';
     const q = s=> row.querySelector(s);
     q(".sswitch").onclick = ()=>{
@@ -1613,7 +1697,7 @@ function renderSched(){
     const sf = q(".sfile");
     sf.onchange = ()=>{
       const file = sf.files[0]; if(!file) return;
-      if(file.size > 2.5*1024*1024){ alert("Файл завеликий (макс 2.5 МБ) 😢"); return; }
+      if(file.size > 2.5*1024*1024){ alert(tr("Файл завеликий (макс 2.5 МБ) 😢", "File is too big (max 2.5 MB) 😢")); return; }
       const r = new FileReader();
       r.onload = ()=>{ ev.customSound = r.result; ev.sound = "custom"; save(); renderSched(); };
       r.readAsDataURL(file);
@@ -1622,7 +1706,7 @@ function renderSched(){
     const wrap = document.createElement("div");
     wrap.className = "swipe";
     const swdel = document.createElement("button");
-    swdel.className = "swdel"; swdel.textContent = "Видалити";
+    swdel.className = "swdel"; swdel.textContent = tr("Видалити", "Delete");
     swdel.onclick = ()=> removeAlarm(ev);
     wrap.appendChild(row); wrap.appendChild(swdel);
     attachSwipe(row);
@@ -1632,7 +1716,7 @@ function renderSched(){
 $("addAlarmBtn").onclick = ()=>{
   const d = new Date();
   const hh = String((d.getHours()+1)%24).padStart(2,"0");
-  const ev = {id:"e"+Date.now(), name:"Новий будильник", time:hh+":00", emoji:"⭐", sound:"fanfare"};
+  const ev = {id:"e"+Date.now(), name:tr("Новий будильник", "New alarm"), time:hh+":00", emoji:"⭐", sound:"fanfare"};
   events.push(ev); save(); renderList();
   schedOpenId = null; renderSched();
   const rows = document.querySelectorAll("#schedList .srow");
@@ -1655,7 +1739,7 @@ function applyLinkAdd(){
     if(q.get("add") === null) return;
     const time = (q.get("time") || "").trim();
     if(!/^\d{2}:\d{2}$/.test(time)) return;
-    const name = (q.get("name") || "").trim() || "Нова подія";
+    const name = (q.get("name") || "").trim() || tr("Нова подія", "New event");
     const emoji = (q.get("emoji") || "").trim() || "⏰";
     let sound = (q.get("sound") || "").trim() || "fanfare";
     if(!SOUNDS[sound]) sound = "fanfare";
@@ -1707,19 +1791,26 @@ function applyRetired(ids){
 }
 /* ---------- Facts of the day (v38): morning always, midday from 12:00, evening from 20:00 ---------- */
 const FACTS_URL = "https://raw.githubusercontent.com/Irene2828/kids-routine/main/facts.json";
+const FACTS_EN_URL = "https://raw.githubusercontent.com/Irene2828/kids-routine/main/facts_en.json";
 const FALLBACK_FACTS = ["Електрон може бути одночасно тут і там — поки ти не подивишся, він «розмазаний» у просторі.", "Дві частинки, народжені разом, лишаються зв'язаними: зміниш одну тут — друга миттєво «дізнається» там, хоч би й на іншому кінці галактики.", "Час для тебе йде трохи повільніше, коли ти рухаєшся, — це виміряли навіть звичайними годинниками на літаках.", "Гравітація теж сповільнює час: годинник на вершині гори цокає швидше, ніж у підвалі.", "Світло — найшвидше у Всесвіті: 299 792 кілометри за секунду, і ніщо не може його обігнати.", "Атоми майже цілком порожні: якби прибрати порожнечу, все людство помістилося б у цукерку.", "Ти ніколи насправді не торкаєшся речей — електрони твоїх пальців відштовхують електрони предмета.", "Магнітик, що висить на холодильнику, бореться з гравітацією всієї Землі — і перемагає.", "Звук не може бути гучнішим за 194 децибели — далі саме повітря розривається на ударну хвилю.", "Крізь тебе щосекунди пролітають мільярди нейтрино — частинок, які проходять крізь усю Землю, ніби її немає.", "Якби ти падав у чорну діру, друзі бачили б, як ти завмираєш на її краю назавжди, — а ти б нічого не помітив.", "У центрі нашої галактики чорна діра важить як чотири мільйони сонць.", "Нейтронні зорі обертаються до 700 разів за секунду — швидше за кухонний блендер.", "Пульсари — маяки Всесвіту: їхні сигнали такі точні, що за ними звіряють атомні годинники.", "Зонд «Вояджер-1» — найдальший об'єкт, зроблений людьми: його сигнал летить до Землі понад 22 години.", "На «Вояджері» летить золота платівка зі звуками Землі: дощ, спів китів і привітання 55 мовами.", "Під кригою Європи, супутника Юпітера, ховається океан — води там більше, ніж у всіх океанах Землі разом.", "На Титані йдуть дощі з метану, а в озерах плещеться рідкий природний газ.", "Марсохід знайшов камінці, обточені водою, — отже, Марсом колись текли річки.", "Доба на Меркурії триває 176 земних діб — довше, ніж два його роки.", "На Венері Сонце сходить на заході — планета обертається у зворотний бік.", "Уран лежить на боці й котиться по орбіті, як м'яч.", "Кільця Сатурна завширшки як відстань від Землі до Місяця, а завтовшки — як багатоповерхівка.", "Астрономи знайшли планету з алмазним ядром — вона вдвічі більша за Землю.", "Є планета, де йде дощ із розпеченого заліза.", "Світло від найдальших галактик летіло до нас понад 13 мільярдів років — ми бачимо Всесвіт немовлям.", "Темна матерія тримає галактики купи, але її ніхто ніколи не бачив — про неї знають лише з гравітації.", "Центр Чумацького Шляху пахне ромом і малиною — там знайшли саме ці молекули.", "На Місяці є вода — у вигляді льоду в кратерах, куди ніколи не зазирає Сонце.", "Усі планети Сонячної системи помістилися б у проміжку між Землею і Місяцем."];
+const FALLBACK_FACTS_EN = ["An electron can be here and there at the same time — until you look at it, it is smeared across space.", "Two particles born together stay connected: change one here, and the other instantly finds out over there, even at the other end of the galaxy.", "Time passes a little slower for you when you move — this was measured even with ordinary clocks on airplanes.", "Gravity slows time too: a clock on a mountaintop ticks faster than one in a basement.", "Light is the fastest thing in the universe: 299,792 kilometres per second, and nothing can outrun it.", "Atoms are almost entirely empty: if you removed the emptiness, all of humanity would fit into a sugar cube.", "You never really touch anything — the electrons in your fingers repel the electrons of the object.", "A little magnet on your fridge fights the gravity of the whole Earth — and wins.", "Sound cannot get louder than 194 decibels — beyond that, the air itself tears into a shock wave.", "Every second, billions of neutrinos fly through you — particles that pass through the whole Earth as if it was not there.", "If you fell into a black hole, your friends would see you freeze at its edge forever — while you would notice nothing at all.", "The black hole at the centre of our galaxy weighs as much as four million suns.", "Neutron stars can spin up to 700 times per second — faster than a kitchen blender.", "Pulsars are the lighthouses of the universe: their signals are so precise that atomic clocks are checked against them.", "The Voyager 1 probe is the farthest object made by humans: its signal takes over 22 hours to reach Earth.", "Voyager carries a golden record with the sounds of Earth: rain, whale songs, and greetings in 55 languages.", "Under the ice of Europa, Jupiter's moon, hides an ocean — there is more water there than in all of Earth's oceans combined.", "On Titan, it rains methane, and its lakes splash with liquid natural gas.", "A Mars rover found pebbles polished by water — so rivers once flowed on Mars.", "A day on Mercury lasts 176 Earth days — longer than two of its years.", "On Venus, the Sun rises in the west — the planet spins the other way.", "Uranus lies on its side and rolls along its orbit like a ball.", "Saturn's rings are as wide as the distance from Earth to the Moon, but only as thick as a tall building.", "Astronomers found a planet with a diamond core — it is twice the size of Earth.", "There is a planet where it rains molten iron.", "Light from the farthest galaxies travelled to us for over 13 billion years — we see the universe as a baby.", "Dark matter holds galaxies together, but nobody has ever seen it — we know it only from gravity.", "The centre of the Milky Way smells of rum and raspberries — those exact molecules were found there.", "There is water on the Moon — as ice in craters the Sun never looks into.", "All the planets of the Solar System would fit in the gap between the Earth and the Moon."];
 let factList = null;
+let factListLang = null;
 function factDayCount(){
   var e = new Date(2026, 9, 4); e.setHours(0,0,0,0); var d = new Date(); d.setHours(0,0,0,0);
   return Math.max(0, Math.round((d - e) / 864e5));
 }
 async function ensureFacts(){
-  if(factList) return factList;
-  try{
-    const r = await fetch(FACTS_URL + "?t=" + Date.now(), {cache:"no-store"});
-    if(r.ok){ const j = await r.json(); if(j && j.length){ factList = j; return factList; } }
-  }catch(e){}
-  factList = FALLBACK_FACTS;
+  if(factList && factListLang === LANG) return factList;
+  const urls = LANG === "en" ? [FACTS_EN_URL, FACTS_URL] : [FACTS_URL];
+  for(let u = 0; u < urls.length; u++){
+    try{
+      const r = await fetch(urls[u] + "?t=" + Date.now(), {cache:"no-store"});
+      if(r.ok){ const j = await r.json(); if(j && j.length){ factList = j; factListLang = LANG; return factList; } }
+    }catch(e){}
+  }
+  factList = LANG === "en" ? FALLBACK_FACTS_EN : FALLBACK_FACTS;
+  factListLang = LANG;
   return factList;
 }
 /* slot: 0 = morning, 1 = midday (from 12:00), 2 = evening (from 20:00). NEVER-REPEAT scheme: every calendar day gets the next disjoint triple (3*day+slot) % n, counting days from 2026-10-04. New facts are always APPENDED at the end of the list, never prepended, so old indices never shift. While n > 3*day the modulo never wraps, so no fact is ever shown twice.
@@ -1738,16 +1829,16 @@ async function toggleFact(){
   const n = list.length;
   const unlocked = factSlotsUnlocked();
   const slots = [
-    {icon:"🌅", name:"Ранковий факт", at:""},
-    {icon:"☀️", name:"Обідній факт", at:"12:00"},
-    {icon:"🌙", name:"Вечірній факт", at:"20:00"}
+    {icon:"🌅", name:tr("Ранковий факт", "Morning fact"), at:""},
+    {icon:"☀️", name:tr("Обідній факт", "Midday fact"), at:"12:00"},
+    {icon:"🌙", name:tr("Вечірній факт", "Evening fact"), at:"20:00"}
   ];
   let html = "";
   for(let k = 0; k < 3; k++){
     if(unlocked[k]){
       html += '<div class="factSlot"><div class="slotTitle">' + slots[k].icon + ' ' + slots[k].name + '</div><div>' + escapeHtml(list[factSlotIndex(n, k)]) + '</div></div>';
     }else{
-      html += '<div class="factSlot factLocked">' + slots[k].icon + ' ' + slots[k].name + ' відкриється о ' + slots[k].at + ' 🔒</div>';
+      html += '<div class="factSlot factLocked">' + slots[k].icon + ' ' + slots[k].name + ' ' + tr("відкриється о", "opens at") + ' ' + slots[k].at + ' 🔒</div>';
     }
   }
   $("factSlots").innerHTML = html;
@@ -1785,7 +1876,7 @@ async function syncRemoteAlarms(){
     if(added || retiredChanged){
       events.sort((a,b)=> a.time < b.time ? -1 : 1);
       save(); renderList();
-      if(added) toast(added === 1 ? "✨ Lola додала: " + lastName : "✨ Lola додала " + added + " будильники!");
+      if(added) toast(added === 1 ? tr("✨ Lola додала: ", "✨ Lola added: ") + lastName : tr("✨ Lola додала ", "✨ Lola added ") + added + tr(" будильники!", " alarms!"));
     }
   }catch(e){}
 }
@@ -1823,7 +1914,7 @@ function renderSlideToggle(){
   if(!b) return;
   const running = effectiveSec() > 0;
   b.innerHTML = running ? ICON_PAUSE : ICON_PLAY;
-  b.setAttribute("aria-label", running ? "Зупинити слайдшоу" : "Запустити слайдшоу");
+  b.setAttribute("aria-label", running ? tr("Зупинити слайдшоу", "Stop slideshow") : tr("Запустити слайдшоу", "Start slideshow"));
   renderStageClock();
 }
 /* ---------- Waiting-mode live clock (v17) ----------
@@ -1841,8 +1932,8 @@ function renderStageClock(){
   const d = new Date();
   const p = n => String(n).padStart(2, "0");
   $("clockTime").textContent = p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
-  const days = ["неділя","понеділок","вівторок","середа","четвер","п'ятниця","субота"];
-  const mon = ["січня","лютого","березня","квітня","травня","червня","липня","серпня","вересня","жовтня","листопада","грудня"];
+  const days = DOW_FULL[LANG];
+  const mon = MON_GEN[LANG];
   $("clockDate").textContent = days[d.getDay()] + ", " + d.getDate() + " " + mon[d.getMonth()];
   renderCountdowns(d);
 }
@@ -1868,11 +1959,11 @@ let cdPageShown = -1;
 function renderCountdowns(d){
   const box = $("countdowns"); if(!box) return;
   const cards = [];
-  cards.push({ico:ICO_PUMPKIN, text:"Хеллоуїн", n: daysUntil(10, 31, d)});
+  cards.push({ico:ICO_PUMPKIN, text:tr("Хеллоуїн", "Halloween"), n: daysUntil(10, 31, d)});
   const startOfToday = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const lpT = new Date(2026, 11, 12);
   if(lpT >= startOfToday){
-    cards.push({ico:ICO_PLANE, text:"Лас-Пальмас", n: Math.round((lpT - startOfToday) / 86400000)});
+    cards.push({ico:ICO_PLANE, text:tr("Лас-Пальмас", "Las Palmas"), n: Math.round((lpT - startOfToday) / 86400000)});
   }
   birthdayList().forEach(b => {
     cards.push({ico:ICO_CAKE, text:b.name, n: daysUntil(b.month, b.day, d)});
@@ -1886,7 +1977,7 @@ function renderCountdowns(d){
   cdPageShown = page;
   const vis = cards.slice(page * 2, page * 2 + 2);
   const html = vis.map(c => {
-    const label = c.n === 0 ? "сьогодні!" : c.n + "д";
+    const label = c.n === 0 ? tr("сьогодні!", "today!") : c.n + tr("д", "d");
     return '<div class="cd-card' + (c.n === 0 ? " today" : "") + '"><span class="cd-ico">' + c.ico + "</span><span>" + c.text + " — " + label + "</span></div>";
   }).join("");
   /* v52: slow cinematic shatter — particles drift, beat, new pair rises in (Iryna 09.10.2026) */
@@ -1979,7 +2070,7 @@ function photoThumb(src, isCustom, id){
   d.className = "pth";
   d.style.backgroundImage = "url('" + src + "')";
   const x = document.createElement("button");
-  x.className = "pthX"; x.textContent = "✕"; x.title = "Прибрати фото";
+  x.className = "pthX"; x.textContent = "✕"; x.title = tr("Прибрати фото", "Remove photo");
   x.onclick = ()=>{
     if(isCustom){
       const arr = customPhotos().filter(c => c.id !== id);
@@ -2019,11 +2110,11 @@ function handlePhotoFile(file){
       arr.push({id:"p" + Date.now(), dataUrl:url});
       localStorage.setItem(CPHOTO_KEY, JSON.stringify(arr));
       renderPhotoMgr(); startSlideshow();
-      toast("✅ Фото додано");
-    }catch(e){ alert("Не вдалося зберегти фото (можливо, закінчилась пам'ять) 😢"); }
+      toast(tr("✅ Фото додано", "✅ Photo added"));
+    }catch(e){ alert(tr("Не вдалося зберегти фото (можливо, закінчилась пам'ять) 😢", "Could not save the photo (storage may be full) 😢")); }
     try{ URL.revokeObjectURL(img.src); }catch(e){}
   };
-  img.onerror = ()=>{ alert("Не вдалося прочитати фото 😢"); };
+  img.onerror = ()=>{ alert(tr("Не вдалося прочитати фото 😢", "Could not read the photo 😢")); };
   img.src = URL.createObjectURL(file);
 }
 
@@ -2055,10 +2146,10 @@ function loadTicker(){
       }
       const mo=at(8), da=at(14), ni=at(22);
       if(!mo || !da || !ni) return;
-      const seg='<span class="tk">'+wxIcon(mo.c,false)+' Вранці <b>'+fmtT(mo.t)+'</b></span>'+
-                '<span class="tk">'+wxIcon(da.c,false)+' Вдень <b>'+fmtT(da.t)+'</b></span>'+
-                '<span class="tk">'+wxIcon(ni.c,true)+' Вночі <b>'+fmtT(ni.t)+'</b></span>'+
-                '<span class="tkDim">Грінфілд Парк</span><span class="tkDot">•</span>';
+      const seg='<span class="tk">'+wxIcon(mo.c,false)+' '+tr("Вранці", "Morning")+' <b>'+fmtT(mo.t)+'</b></span>'+
+                '<span class="tk">'+wxIcon(da.c,false)+' '+tr("Вдень", "Daytime")+' <b>'+fmtT(da.t)+'</b></span>'+
+                '<span class="tk">'+wxIcon(ni.c,true)+' '+tr("Вночі", "Night")+' <b>'+fmtT(ni.t)+'</b></span>'+
+                '<span class="tkDim">' + tr("Грінфілд Парк", "Greenfield Park") + '</span><span class="tkDot">•</span>';
       $("tickerInner").innerHTML=seg+seg+seg+seg+seg+seg;
       $("ticker").style.display="block";
     })
@@ -2074,10 +2165,13 @@ try{
   if(anyOn) save();
 }catch(e){}
 tickClock(); renderList();
+applyI18n();
+if(window.wSetLang) window.wSetLang(LANG);
+$("langBtn").addEventListener("click", function(){ krToggleLang(); });
 startSlideshow();
 $("photoAdd").addEventListener("change", e=>{ handlePhotoFile(e.target.files[0]); e.target.value = ""; });
 $("slideInt").addEventListener("change", ()=>{ try{ localStorage.setItem(SINT_KEY, $("slideInt").value); }catch(e){} startSlideshow(); });
-$("photoReset").onclick = ()=>{ try{ localStorage.removeItem(HIDE_KEY); }catch(e){} renderPhotoMgr(); startSlideshow(); toast("↩️ Приховані фото повернуто"); };
+$("photoReset").onclick = ()=>{ try{ localStorage.removeItem(HIDE_KEY); }catch(e){} renderPhotoMgr(); startSlideshow(); toast(tr("↩️ Приховані фото повернуто", "↩️ Hidden photos are back")); };
 $("slideToggle").onclick = ()=>{
   try{
     if(effectiveSec() > 0){ localStorage.setItem(PAUSE_KEY, "1"); } // running -> pause
