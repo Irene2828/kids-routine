@@ -2132,11 +2132,13 @@ function wxIcon(c, night){
   return "🌤️";
 }
 function fmtT(t){ return (t>0?"+":"")+Math.round(t)+"°"; }
+var WX_URL="https://api.open-meteo.com/v1/forecast?latitude=45.48&longitude=-73.47&hourly=temperature_2m,weathercode&timezone=America%2FToronto&forecast_days=2";
 function loadTicker(){
-  fetch("https://api.open-meteo.com/v1/forecast?latitude=45.48&longitude=-73.47&hourly=temperature_2m,weathercode&timezone=America%2FToronto&forecast_days=2")
-    .then(function(r){ return r.json(); })
-    .then(function(j){
-      if(!j || !j.hourly || !j.hourly.time) return;
+  /* v57: weather goes through the app's own origin (/wx rewrite) first — the old
+     iPad talks to Vercel fine, direct Open-Meteo from iOS 12 broke (22.10.2026).
+     Fallback: direct fetch, then the last cached strip, so it never just vanishes. */
+  function render(j){
+      if(!j || !j.hourly || !j.hourly.time) return false;
       const times=j.hourly.time, temps=j.hourly.temperature_2m, codes=j.hourly.weathercode;
       const now=new Date();
       const ds=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
@@ -2145,15 +2147,26 @@ function loadTicker(){
         return i>=0 ? {t:temps[i], c:codes[i]} : null;
       }
       const mo=at(8), da=at(14), ni=at(22);
-      if(!mo || !da || !ni) return;
+      if(!mo || !da || !ni) return false;
       const seg='<span class="tk">'+wxIcon(mo.c,false)+' '+tr("Вранці", "Morning")+' <b>'+fmtT(mo.t)+'</b></span>'+
                 '<span class="tk">'+wxIcon(da.c,false)+' '+tr("Вдень", "Daytime")+' <b>'+fmtT(da.t)+'</b></span>'+
                 '<span class="tk">'+wxIcon(ni.c,true)+' '+tr("Вночі", "Night")+' <b>'+fmtT(ni.t)+'</b></span>'+
                 '<span class="tkDim">' + tr("Грінфілд Парк", "Greenfield Park") + '</span><span class="tkDot">•</span>';
       $("tickerInner").innerHTML=seg+seg+seg+seg+seg+seg;
       $("ticker").style.display="block";
-    })
-    .catch(function(){ /* offline: ticker stays hidden */ });
+      try{ localStorage.setItem("kr.wxCache.v1", seg); }catch(e){}
+      return true;
+  }
+  function showCache(){
+    try{ var s=localStorage.getItem("kr.wxCache.v1"); if(s){ $("tickerInner").innerHTML=s+s+s+s+s+s; $("ticker").style.display="block"; } }catch(e){}
+  }
+  function go(url, fallback){
+    fetch(url)
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if(!render(j)){ if(fallback) go(fallback, null); else showCache(); } })
+      .catch(function(){ if(fallback) go(fallback, null); else showCache(); });
+  }
+  go("/wx", WX_URL);
 }
 
 /* ---------- Boot ---------- */

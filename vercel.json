@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/wx",
+      "destination": "https://api.open-meteo.com/v1/forecast?latitude=45.48&longitude=-73.47&hourly=temperature_2m,weathercode&timezone=America%2FToronto&forecast_days=2"
+    }
+  ]
+}
