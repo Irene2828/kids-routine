@@ -519,7 +519,7 @@
   <button id="foodBtn" class="stageIcon" title="Меню">🍽️</button>
   <button id="calBtn" class="stageIcon" title="Календар">📅</button>
   <button id="schoolBtn" class="stageIcon" title="Школа">🏫</button>
-  <div id="verChip">версія 60 • 31.10.2026</div>
+  <div id="verChip">версія 61 • 31.10.2026</div>
   <button id="factBtn" title="Факти дня">💡</button>
   <button id="langBtn" title="Мова / Language">EN</button>
   <div id="factCard"><div class="factTitle">Дивовижні факти дня 💡</div><div id="factSlots"></div><div class="factTomorrow">До завтра — будуть нові факти!</div></div>
@@ -542,7 +542,7 @@
 
 <main id="list"></main>
 
-<div class="ver">версія 60 • 31.10.2026</div>
+<div class="ver">версія 61 • 31.10.2026</div>
 </div><!-- /app -->
 
 <div id="calModal">
@@ -1999,12 +1999,20 @@ function renderCountdowns(d){
   });
   /* v43: 2 cards at a time, rotate every 5 seconds
      v45: gentle fade out/in on rotation
-     v51: cards shatter into particles, then the next pair appears (Iryna 09.10.2026) */
-  const pages = Math.max(1, Math.ceil(cards.length / 2));
+     v51: cards shatter into particles, then the next pair appears (Iryna 09.10.2026)
+     v61 (31.10.2026, Iryna): groups, not pairs — Las Palmas alone, then
+     both birthdays together; after Las Palmas drops off, birthdays stay
+     together on one page */
+  const lpCards = cards.filter(c => c.ico === ICO_PLANE);
+  const restCards = cards.filter(c => c.ico !== ICO_PLANE);
+  const groups = [];
+  if(lpCards.length) groups.push(lpCards);
+  if(restCards.length) groups.push(restCards);
+  const pages = Math.max(1, groups.length);
   const page = Math.floor(Date.now() / 5000) % pages;
   if(page === cdPageShown) return;
   cdPageShown = page;
-  const vis = cards.slice(page * 2, page * 2 + 2);
+  const vis = groups[page];
   const html = vis.map(c => {
     const label = c.n === 0 ? tr("сьогодні!", "today!") : c.n + tr("д", "d");
     return '<div class="cd-card' + (c.n === 0 ? " today" : "") + '"><span class="cd-ico">' + c.ico + "</span><span>" + c.text + " — " + label + "</span></div>";
