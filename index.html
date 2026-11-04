@@ -297,7 +297,7 @@
     font-size:11px; color:rgba(255,255,255,.55); text-shadow:0 1px 4px rgba(0,0,0,.5);
     pointer-events:none;
   }
-  /* ---------- Facts of the day (v38): morning always, midday from 12:00, evening from 20:00 ---------- */
+  /* ---------- Facts of the day (v38): morning always, midday from 12:00, evening from 19:00 ---------- */
   #factBtn{
     /* v52: vertically centered against the play button (45px from bottom) — Iryna 09.10.2026 */
     position:absolute; left:12px; bottom:calc(env(safe-area-inset-bottom) + 22px); z-index:11;
@@ -1789,7 +1789,7 @@ function applyRetired(ids){
   if(changed){ try{ localStorage.setItem(DISMISS_KEY, JSON.stringify(dis)); }catch(e){} }
   return changed;
 }
-/* ---------- Facts of the day (v38): morning always, midday from 12:00, evening from 20:00 ---------- */
+/* ---------- Facts of the day (v38): morning always, midday from 12:00, evening from 19:00 ---------- */
 const FACTS_URL = "https://raw.githubusercontent.com/Irene2828/kids-routine/main/facts.json";
 const FACTS_EN_URL = "https://raw.githubusercontent.com/Irene2828/kids-routine/main/facts_en.json";
 const FALLBACK_FACTS = ["Електрон може бути одночасно тут і там — поки ти не подивишся, він «розмазаний» у просторі.", "Дві частинки, народжені разом, лишаються зв'язаними: зміниш одну тут — друга миттєво «дізнається» там, хоч би й на іншому кінці галактики.", "Час для тебе йде трохи повільніше, коли ти рухаєшся, — це виміряли навіть звичайними годинниками на літаках.", "Гравітація теж сповільнює час: годинник на вершині гори цокає швидше, ніж у підвалі.", "Світло — найшвидше у Всесвіті: 299 792 кілометри за секунду, і ніщо не може його обігнати.", "Атоми майже цілком порожні: якби прибрати порожнечу, все людство помістилося б у цукерку.", "Ти ніколи насправді не торкаєшся речей — електрони твоїх пальців відштовхують електрони предмета.", "Магнітик, що висить на холодильнику, бореться з гравітацією всієї Землі — і перемагає.", "Звук не може бути гучнішим за 194 децибели — далі саме повітря розривається на ударну хвилю.", "Крізь тебе щосекунди пролітають мільярди нейтрино — частинок, які проходять крізь усю Землю, ніби її немає.", "Якби ти падав у чорну діру, друзі бачили б, як ти завмираєш на її краю назавжди, — а ти б нічого не помітив.", "У центрі нашої галактики чорна діра важить як чотири мільйони сонць.", "Нейтронні зорі обертаються до 700 разів за секунду — швидше за кухонний блендер.", "Пульсари — маяки Всесвіту: їхні сигнали такі точні, що за ними звіряють атомні годинники.", "Зонд «Вояджер-1» — найдальший об'єкт, зроблений людьми: його сигнал летить до Землі понад 22 години.", "На «Вояджері» летить золота платівка зі звуками Землі: дощ, спів китів і привітання 55 мовами.", "Під кригою Європи, супутника Юпітера, ховається океан — води там більше, ніж у всіх океанах Землі разом.", "На Титані йдуть дощі з метану, а в озерах плещеться рідкий природний газ.", "Марсохід знайшов камінці, обточені водою, — отже, Марсом колись текли річки.", "Доба на Меркурії триває 176 земних діб — довше, ніж два його роки.", "На Венері Сонце сходить на заході — планета обертається у зворотний бік.", "Уран лежить на боці й котиться по орбіті, як м'яч.", "Кільця Сатурна завширшки як відстань від Землі до Місяця, а завтовшки — як багатоповерхівка.", "Астрономи знайшли планету з алмазним ядром — вона вдвічі більша за Землю.", "Є планета, де йде дощ із розпеченого заліза.", "Світло від найдальших галактик летіло до нас понад 13 мільярдів років — ми бачимо Всесвіт немовлям.", "Темна матерія тримає галактики купи, але її ніхто ніколи не бачив — про неї знають лише з гравітації.", "Центр Чумацького Шляху пахне ромом і малиною — там знайшли саме ці молекули.", "На Місяці є вода — у вигляді льоду в кратерах, куди ніколи не зазирає Сонце.", "Усі планети Сонячної системи помістилися б у проміжку між Землею і Місяцем."];
@@ -1813,14 +1813,14 @@ async function ensureFacts(){
   factListLang = LANG;
   return factList;
 }
-/* slot: 0 = morning, 1 = midday (from 12:00), 2 = evening (from 20:00). NEVER-REPEAT scheme: every calendar day gets the next disjoint triple (3*day+slot) % n, counting days from 2026-10-04. New facts are always APPENDED at the end of the list, never prepended, so old indices never shift. While n > 3*day the modulo never wraps, so no fact is ever shown twice.
+/* slot: 0 = morning, 1 = midday (from 12:00), 2 = evening (from 19:00). NEVER-REPEAT scheme: every calendar day gets the next disjoint triple (3*day+slot) % n, counting days from 2026-10-04. New facts are always APPENDED at the end of the list, never prepended, so old indices never shift. While n > 3*day the modulo never wraps, so no fact is ever shown twice.
    2026-10-07 one-time topic interleave: facts.json was reordered ONCE so each day's triple spans 3 different topics (before: adjacent triples shared one topic block, e.g. days of pure space). Positions 0-11 were left untouched (already shown 04-07.10, must never repeat); positions 12+ were round-robin interleaved across 12 topic blocks in sub-blocks of <=6. The no-repeat guarantee is unaffected: shown indices remain strictly increasing. */
 function factSlotIndex(n, slot){
   return (factDayCount() * 3 + slot) % n;
 }
 function factSlotsUnlocked(){
   var h = new Date().getHours();
-  return [true, h >= 12, h >= 20];
+  return [true, h >= 12, h >= 19];
 }
 async function toggleFact(){
   const card = $("factCard");
@@ -1831,7 +1831,7 @@ async function toggleFact(){
   const slots = [
     {icon:"🌅", name:tr("Ранковий факт", "Morning fact"), at:""},
     {icon:"☀️", name:tr("Обідній факт", "Midday fact"), at:"12:00"},
-    {icon:"🌙", name:tr("Вечірній факт", "Evening fact"), at:"20:00"}
+    {icon:"🌙", name:tr("Вечірній факт", "Evening fact"), at:"19:00"}
   ];
   let html = "";
   for(let k = 0; k < 3; k++){
